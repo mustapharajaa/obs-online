@@ -873,8 +873,9 @@ app.get('/lives', (req, res) => {
 });
 
 const PORT = 3005;
-server.listen(PORT, () => {
-    console.log(`🚀 PATCHED RTMP Streaming Server running on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 PATCHED RTMP Streaming Server running on http://0.0.0.0:${PORT}`);
+    console.log(`🌐 Server accessible from internet at: http://YOUR_SERVER_IP:${PORT}`);
     console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
     console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
     console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);
