@@ -1,0 +1,124 @@
+🎬 VIDEO TEST VIEWPORT
+📐 Size: 1280x720
+📏 Aspect: 1.78:1
+🎯 Target: 16:9 (1.78:1)
+
+
+
+COMOND DTECT VIEW PORT 
+console.log('🔍 REAL BROWSER SIZE DETECTION:');
+console.log('📱 VIEWPORT:', window.innerWidth + 'x' + window.innerHeight);
+console.log('🪟 FULL WINDOW:', window.outerWidth + 'x' + window.outerHeight);
+console.log('🎨 CHROME SPACE:', '+' + (window.outerWidth - window.innerWidth) + 'w, +' + (window.outerHeight - window.innerHeight) + 'h');
+
+
+X Y SCROOL DETECTION 
+console.log('🔍 COMPLETE BROWSER POSITION DETECTION:');
+console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
+console.log('🪟 Window:', window.outerWidth + 'x' + window.outerHeight);
+console.log('📍 Position X,Y:', window.screenX + ',' + window.screenY);
+console.log('📜 Scroll X,Y:', window.scrollX + ',' + window.scrollY);
+console.log('📄 Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+console.log('📏 Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
+
+
+
+console.log('📱 VIEWPORT:', window.innerWidth + 'x' + window.innerHeight);
+console.log('🪟 FULL WINDOW:', window.outerWidth + 'x' + window.outerHeight);
+console.log('🎨 CHROME SPACE:', '+' + (window.outerWidth - window.innerWidth) + 'w, +' + (window.outerHeight - window.innerHeight) + 'h');
+VM1594:1 🔍 REAL BROWSER SIZE DETECTION:
+VM1594:2 📱 VIEWPORT: 219x434
+VM1594:3 🪟 FULL WINDOW: 788x528
+VM1594:4 🎨 CHROME SPACE: +569w, +94h
+undefined
+
+
+
+
+
+
+
+
+Target
+🔍 COMPLETE BROWSER POSITION DETECTION:
+VM333:2 📱 Viewport: 643x578
+VM333:3 🪟 Window: 1212x672
+VM333:4 📍 Position X,Y: 100,100
+VM333:5 📜 Scroll X,Y: 49.599998474121094,543.2000122070312
+VM333:6 📄 Page Size: 1300x4917
+VM333:7 📏 Max Scroll: 657,4339
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+console.log('🔍 COMPLETE BROWSER POSITION DETECTION:');
+console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
+console.log('🪟 Window:', window.outerWidth + 'x' + window.outerHeight);
+console.log('📍 Position X,Y:', window.screenX + ',' + window.screenY);
+console.log('📜 Scroll X,Y:', window.scrollX + ',' + window.scrollY);
+console.log('📄 Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+console.log('📏 Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
+console.log('🔍 Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
+console.log('🔎 Zoom Ratio:', window.devicePixelRatio);
+console.log('📐 Screen Resolution:', screen.width + 'x' + screen.height);
+console.log('📊 Available Screen:', screen.availWidth + 'x' + screen.availHeight);
+
+
+
+
+
+
+
+console.log('🔍 COMPREHENSIVE PAGE PARAMETER DETECTION:');
+console.log('='.repeat(60));
+console.log('📱 VIEWPORT & WINDOW:');
+console.log('   Viewport (inner):', window.innerWidth + 'x' + window.innerHeight);
+console.log('   Window (outer):', window.outerWidth + 'x' + window.outerHeight);
+console.log('   Position X,Y:', window.screenX + ',' + window.screenY);
+console.log('📜 SCROLL PARAMETERS:');
+console.log('   Current Scroll X,Y:', window.scrollX + ',' + window.scrollY);
+console.log('   Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+console.log('   Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
+console.log('🔍 ZOOM & SCALING:');
+console.log('   Device Pixel Ratio:', window.devicePixelRatio);
+console.log('   Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
+console.log('   Body Zoom Style:', document.body.style.zoom || 'none');
+console.log('   Body Transform:', document.body.style.transform || 'none');
+console.log('   Computed Body Zoom:', window.getComputedStyle(document.body).zoom || 'auto');
+console.log('   HTML Zoom:', document.documentElement.style.zoom || 'none');
+console.log('📐 ELEMENT SIZES:');
+console.log('   Body Client:', document.body.clientWidth + 'x' + document.body.clientHeight);
+console.log('   Body Offset:', document.body.offsetWidth + 'x' + document.body.offsetHeight);
+console.log('   Body Scroll:', document.body.scrollWidth + 'x' + document.body.scrollHeight);
+console.log('   HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+console.log('🎯 CSS PROPERTIES:');
+const bodyStyle = window.getComputedStyle(document.body);
+console.log('   Font Size:', bodyStyle.fontSize);
+console.log('   Line Height:', bodyStyle.lineHeight);
+console.log('   Transform:', bodyStyle.transform);
+console.log('   Scale:', bodyStyle.scale || 'none');
+console.log('📊 SCREEN INFO:');
+console.log('   Screen Resolution:', screen.width + 'x' + screen.height);
+console.log('   Available Screen:', screen.availWidth + 'x' + screen.availHeight);
+console.log('   Color Depth:', screen.colorDepth + ' bits');
+console.log('   Pixel Depth:', screen.pixelDepth + ' bits');
+console.log('🌐 BROWSER INFO:');
+console.log('   User Agent:', navigator.userAgent.substring(0, 100) + '...');
+console.log('   Platform:', navigator.platform);
+console.log('   Language:', navigator.language);
+console.log('='.repeat(60));
+
+
+
+
+

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PATCHED Library Direct RTMP Streaming</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .pipeline {
+            text-align: center;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .patch-info {
+            text-align: center;
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #FFC107;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .start-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stop-btn {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            color: white;
+        }
+
+        .stop-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .cookies-btn {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+        }
+
+        .cookies-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+        }
+
+        .status.info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 2px solid #2196F3;
+        }
+
+        .features {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .features h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .features li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+
+        .patch-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #FFC107, #FF9800);
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .streaming {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 PATCHED Library RTMP</h1>
+        <p class="subtitle">
+            Modified puppeteer-screen-recorder for Direct RTMP Output
+            <span class="patch-badge">LIBRARY PATCHED</span>
+        </p>
+
+        <div class="pipeline">
+            Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP → YouTube Live
+        </div>
+
+        <div class="patch-info">
+            🔧 Library Modification: pageVideoStreamWriter.ts now detects RTMP URLs and streams directly without creating files!
+        </div>
+
+        <div class="form-group">
+            <label for="url">🌐 Website URL to Stream:</label>
+            <input type="url" id="url" placeholder="https://example.com" value="https://www.aiscore.com/">
+        </div>
+
+        <div class="form-group">
+            <label for="rtmpUrl">📡 RTMP Server URL:</label>
+            <input type="text" id="rtmpUrl" placeholder="rtmp://a.rtmp.youtube.com/live2" value="rtmp://a.rtmp.youtube.com/live2">
+        </div>
+
+        <div class="form-group">
+            <label for="streamKey">🔑 Stream Key:</label>
+            <input type="text" id="streamKey" placeholder="Your YouTube Live stream key" value="phkf-ryjz-2tp4-sjgp-128r">
+        </div>
+
+        <div class="button-group">
+            <button id="startBtn" class="start-btn">🎬 Start PATCHED Streaming</button>
+            <button id="stopBtn" class="stop-btn" disabled>🛑 Stop Streaming</button>
+            <button id="cookiesBtn" class="cookies-btn" onclick="window.open('cookies-manager.html', '_blank')">🍪 Manage Cookies</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="features">
+            <h3>🔧 PATCHED Library Benefits:</h3>
+            <ul>
+                <li><strong>Library Modified</strong> - pageVideoStreamWriter.ts patched for RTMP support</li>
+                <li><strong>Direct RTMP Output</strong> - No file creation, streams directly to RTMP</li>
+                <li><strong>Same Proven Logic</strong> - All existing frame capture logic unchanged</li>
+                <li><strong>RTMP URL Detection</strong> - Automatically detects rtmp:// URLs and streams</li>
+                <li><strong>Real-Time Streaming</strong> - No file delays or chunking issues</li>
+                <li><strong>Professional Quality</strong> - Native Chrome DevTools Protocol capture</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const container = document.querySelector('.container');
+
+        let isStreaming = false;
+
+        function updateStatus(message, type = 'info') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            console.log(`${type.toUpperCase()}: ${message}`);
+        }
+
+        function setStreamingState(streaming) {
+            isStreaming = streaming;
+            startBtn.disabled = streaming;
+            stopBtn.disabled = !streaming;
+            
+            if (streaming) {
+                container.classList.add('streaming');
+                updateStatus('🎬 PATCHED library streaming ACTIVE - Direct RTMP output!', 'success');
+            } else {
+                container.classList.remove('streaming');
+                updateStatus('⏹️ Streaming stopped', 'info');
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            console.log('🔘 Start PATCHED streaming button clicked!');
+            
+            const url = document.getElementById('url').value;
+            const rtmpUrl = document.getElementById('rtmpUrl').value;
+            const streamKey = document.getElementById('streamKey').value;
+
+            console.log('📝 Form values:', { url, rtmpUrl, streamKey });
+
+            if (!url || !rtmpUrl || !streamKey) {
+                console.log('❌ Missing form fields');
+                updateStatus('❌ Please fill in all fields', 'error');
+                return;
+            }
+
+            console.log('🚀 Emitting startPatchedRTMPStream event...');
+            updateStatus('🚀 Starting PATCHED library direct RTMP streaming...', 'info');
+            
+            const eventData = {
+                url: url,
+                rtmpUrl: rtmpUrl,
+                streamKey: streamKey
+            };
+            
+            console.log('📡 Sending data to server:', eventData);
+            socket.emit('startPatchedRTMPStream', eventData);
+            console.log('✅ Event emitted successfully');
+        });
+
+        stopBtn.addEventListener('click', () => {
+            console.log('🛑 Stop button clicked');
+            updateStatus('🛑 Stopping PATCHED streaming...', 'info');
+            socket.emit('stopStream');
+        });
+
+        // Socket event handlers
+        socket.on('streamStarted', (data) => {
+            console.log('✅ Stream started:', data);
+            setStreamingState(true);
+            updateStatus(`✅ ${data.message}`, 'success');
+        });
+
+        socket.on('streamStopped', () => {
+            console.log('🛑 Stream stopped');
+            setStreamingState(false);
+        });
+
+        socket.on('streamError', (error) => {
+            console.error('❌ Stream error:', error);
+            setStreamingState(false);
+            updateStatus(`❌ Error: ${error}`, 'error');
+        });
+
+        socket.on('connect', () => {
+            console.log('🔌 Socket.IO connected to server');
+            updateStatus('🔌 Connected to server', 'success');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('🔌 Socket.IO disconnected from server');
+            setStreamingState(false);
+            updateStatus('🔌 Disconnected from server', 'error');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('❌ Socket.IO connection error:', error);
+            updateStatus('❌ Connection error: ' + error.message, 'error');
+        });
+
+        // Initial status
+        updateStatus('🔧 Ready for PATCHED library direct RTMP streaming!', 'info');
+    </script>
+</body>
+</html>

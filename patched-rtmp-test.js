@@ -1,0 +1,840 @@
+// TEST THE PATCHED PUPPETEER-SCREEN-RECORDER WITH DIRECT RTMP OUTPUT
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const puppeteer = require('puppeteer');
+const path = require('path');
+const fs = require('fs');
+
+// Import the PATCHED puppeteer-screen-recorder
+const { PuppeteerScreenRecorder } = require('./puppeteer-screen-recorder-main/build/main/index.js');
+
+// Import cookies helper
+let CookiesHelper;
+try {
+    CookiesHelper = require('./cookies-helper');
+    console.log('✅ CookiesHelper imported successfully');
+} catch (error) {
+    console.log('⚠️ CookiesHelper import failed, creating dummy class:', error.message);
+    CookiesHelper = class {
+        async applyCookiesToPage(page) {
+            console.log('🍪 Using dummy cookies helper (no cookies applied)');
+        }
+    };
+}
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+app.use(express.static('.'));
+app.use(express.json());
+
+// Multiple concurrent streams management
+const activeStreams = new Map(); // streamId -> { browser, page, recorder, interval }
+let streamCounter = 0;
+
+// Socket.IO events
+io.on('connection', (socket) => {
+    console.log('🔌 Client connected');
+
+    socket.on('startPatchedRTMPStream', async (data) => {
+        const { url, rtmpUrl, streamKey, bitrate = 2500, fps = 15, resolution = '1280x720', scrollX = 0, scrollY = 0, zoomLevel = 100, viewportWidth = 1280, viewportHeight = 720 } = data;
+        
+        console.log(`📥 Received startPatchedRTMPStream request:`, { url, rtmpUrl, streamKey, bitrate, fps, resolution, scrollX, scrollY, zoomLevel, viewportWidth, viewportHeight });
+        
+        // Create unique stream ID
+        const streamId = ++streamCounter;
+        
+        try {
+            const rtmpEndpoint = `${rtmpUrl}/${streamKey}`;
+            console.log(`🚀 [Stream ${streamId}] Starting PATCHED RTMP streaming for: ${url} → ${rtmpEndpoint}`);
+            console.log(`📊 Active streams: ${activeStreams.size + 1}`);
+            
+            // Define exact position settings (same as puppeteer-exact-viewport.js)
+            const exactPosition = {
+                windowWidth: 964,
+                windowHeight: 636,
+                positionX: 268,
+                positionY: 64,
+                scrollX: 49,
+                scrollY: 459
+            };
+            console.log(`🪟 [Stream ${streamId}] Using exact position: ${exactPosition.windowWidth}x${exactPosition.windowHeight} at ${exactPosition.positionX},${exactPosition.positionY}`);
+            console.log(`📜 [Stream ${streamId}] Using exact scroll: X=${exactPosition.scrollX}, Y=${exactPosition.scrollY}`);
+            
+            // Launch dedicated browser for this stream
+            console.log(`🌐 [Stream ${streamId}] Launching dedicated browser...`);
+            let browser, page;
+            try {
+                // Try to find Chrome executable
+                let chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+                
+                if (!fs.existsSync(chromePath)) {
+                    chromePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+                    console.log(`🔍 [Stream ${streamId}] Trying alternative Chrome path...`);
+                }
+                
+                if (!fs.existsSync(chromePath)) {
+                    console.log(`🔍 [Stream ${streamId}] Using system default Chrome...`);
+                    chromePath = undefined;
+                }
+                
+                console.log(`🌐 [Stream ${streamId}] Using Chrome at: ${chromePath || 'system default'}`);
+                
+                browser = await puppeteer.launch({
+                    headless: false, // Show the browser window
+                    defaultViewport: null, // Let browser determine viewport based on window size
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-web-security',
+                        '--disable-features=VizDisplayCompositor',
+                        `--window-size=${exactPosition.windowWidth},${exactPosition.windowHeight}`,
+                        `--window-position=${exactPosition.positionX + (streamId - 1) * 20},${exactPosition.positionY + (streamId - 1) * 20}`, // Offset each stream window
+                        `--user-data-dir=./chrome-data-rtmp-${streamId}` // Unique user data directory for each stream
+                    ]
+                });
+                console.log(`✅ [Stream ${streamId}] Browser launched with window ${exactPosition.windowWidth}x${exactPosition.windowHeight} at position ${exactPosition.positionX},${exactPosition.positionY}`);
+
+                page = await browser.newPage();
+                console.log(`✅ [Stream ${streamId}] New page created`);
+                
+                // No viewport setting - capture entire browser window (1212x672)
+                console.log(`✅ [Stream ${streamId}] Using full browser window for capture`);
+
+                // Set user agent (same as puppeteer-exact-viewport.js)
+                await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+                console.log(`🌐 [Stream ${streamId}] User agent set to match exact viewport browser`);
+
+                // Load cookies for authentication
+                const cookiesHelper = new CookiesHelper();
+                await cookiesHelper.applyCookiesToPage(page);
+                console.log(`🍪 [Stream ${streamId}] Cookies applied to browser`);
+            } catch (browserError) {
+                console.error(`❌ [Stream ${streamId}] Browser launch error:`, browserError);
+                throw browserError;
+            }
+
+            // Navigate to URL
+            console.log(`🌐 [Stream ${streamId}] Navigating to: ${url}`);
+            console.log(`🔍 [Stream ${streamId}] DEBUG: About to call page.goto...`);
+            try {
+                console.log(`🔍 [Stream ${streamId}] DEBUG: Calling page.goto with 5min timeout...`);
+                await page.goto(url, { waitUntil: 'networkidle0', timeout: 300000 });
+                console.log(`✅ [Stream ${streamId}] Navigated to: ${url}`);
+                console.log(`🔍 [Stream ${streamId}] DEBUG: Navigation successful, proceeding to page setup...`);
+
+                // Set exact scroll position (same as puppeteer-exact-viewport.js)
+                console.log(`📜 [Stream ${streamId}] Setting exact scroll position...`);
+                await page.evaluate((scrollX, scrollY) => {
+                    window.scrollTo(scrollX, scrollY);
+                }, exactPosition.scrollX, exactPosition.scrollY);
+
+                // No zoom applied - keep natural 100% view (same as puppeteer-exact-viewport.js)
+                console.log(`✅ [Stream ${streamId}] Keeping natural 100% zoom for full-size view...`);
+                
+                // Force full viewport usage with aggressive CSS (same as puppeteer-exact-viewport.js)
+                console.log(`🔧 [Stream ${streamId}] Forcing full viewport usage...`);
+                await page.evaluate(() => {
+                    // Force HTML and body to use full viewport dimensions with !important
+                    document.documentElement.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
+                    document.body.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
+                    
+                    // Force recalculation
+                    window.dispatchEvent(new Event('resize'));
+                    
+                    // Log the results
+                    console.log('✅ FORCED full viewport usage with !important styles');
+                    console.log('📏 HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+                    console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
+                    console.log('🎯 Match:', (document.documentElement.clientWidth === window.innerWidth && document.documentElement.clientHeight === window.innerHeight) ? 'PERFECT' : 'STILL DIFFERENT');
+                });
+
+                // Run comprehensive page parameter detection (same as puppeteer-exact-viewport.js)
+                console.log(`🔍 [Stream ${streamId}] Running comprehensive page parameter detection...`);
+                await page.evaluate(() => {
+                    console.log('🔍 COMPREHENSIVE PAGE PARAMETER DETECTION:');
+                    console.log('='.repeat(60));
+                    console.log('📱 VIEWPORT & WINDOW:');
+                    console.log('   Viewport (inner):', window.innerWidth + 'x' + window.innerHeight);
+                    console.log('   Window (outer):', window.outerWidth + 'x' + window.outerHeight);
+                    console.log('   Position X,Y:', window.screenX + ',' + window.screenY);
+                    console.log('📜 SCROLL PARAMETERS:');
+                    console.log('   Current Scroll X,Y:', window.scrollX + ',' + window.scrollY);
+                    console.log('   Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+                    console.log('   Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
+                    console.log('🔍 ZOOM & SCALING:');
+                    console.log('   Device Pixel Ratio:', window.devicePixelRatio);
+                    console.log('   Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
+                    console.log('   Body Zoom Style:', document.body.style.zoom || 'none');
+                    console.log('   Body Transform:', document.body.style.transform || 'none');
+                    console.log('   Computed Body Zoom:', window.getComputedStyle(document.body).zoom || 'auto');
+                    console.log('   HTML Zoom:', document.documentElement.style.zoom || 'none');
+                    console.log('📐 ELEMENT SIZES:');
+                    console.log('   Body Client:', document.body.clientWidth + 'x' + document.body.clientHeight);
+                    console.log('   Body Offset:', document.body.offsetWidth + 'x' + document.body.offsetHeight);
+                    console.log('   Body Scroll:', document.body.scrollWidth + 'x' + document.body.scrollHeight);
+                    console.log('   HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+                    console.log('🎯 CSS PROPERTIES:');
+                    const bodyStyle = window.getComputedStyle(document.body);
+                    console.log('   Font Size:', bodyStyle.fontSize);
+                    console.log('   Line Height:', bodyStyle.lineHeight);
+                    console.log('   Transform:', bodyStyle.transform);
+                    console.log('   Scale:', bodyStyle.scale || 'none');
+                    console.log('📊 SCREEN INFO:');
+                    console.log('   Screen Resolution:', screen.width + 'x' + screen.height);
+                    console.log('   Available Screen:', screen.availWidth + 'x' + screen.availHeight);
+                    console.log('   Color Depth:', screen.colorDepth + ' bits');
+                    console.log('   Pixel Depth:', screen.pixelDepth + ' bits');
+                    console.log('🌐 BROWSER INFO:');
+                    console.log('   User Agent:', navigator.userAgent.substring(0, 100) + '...');
+                    console.log('   Platform:', navigator.platform);
+                    console.log('   Language:', navigator.language);
+                    console.log('='.repeat(60));
+                });
+
+                // Set exact scroll position (same as puppeteer-exact-viewport.js)
+                console.log(`📜 [Stream ${streamId}] Setting exact scroll position...`);
+                await page.evaluate((scrollX, scrollY) => {
+                    window.scrollTo(scrollX, scrollY);
+                }, exactPosition.scrollX, exactPosition.scrollY);
+
+                // No zoom applied - keep natural 100% view (same as puppeteer-exact-viewport.js)
+                console.log(`✅ [Stream ${streamId}] Keeping natural 100% zoom for full-size view...`);
+                
+                // Force full viewport usage with aggressive CSS (same as puppeteer-exact-viewport.js)
+                console.log(`🔧 [Stream ${streamId}] Forcing full viewport usage...`);
+                await page.evaluate(() => {
+                    // Force HTML and body to use full viewport dimensions with !important
+                    document.documentElement.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
+                    document.body.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
+                    
+                    // Force recalculation
+                    window.dispatchEvent(new Event('resize'));
+                    
+                    // Log the results
+                    console.log('✅ FORCED full viewport usage with !important styles');
+                    console.log('📏 HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+                    console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
+                    console.log('🎯 Match:', (document.documentElement.clientWidth === window.innerWidth && document.documentElement.clientHeight === window.innerHeight) ? 'PERFECT' : 'STILL DIFFERENT');
+                });
+
+                // Run comprehensive page parameter detection (same as puppeteer-exact-viewport.js)
+                console.log(`🔍 [Stream ${streamId}] Running comprehensive page parameter detection...`);
+                await page.evaluate(() => {
+                    console.log('🔍 COMPREHENSIVE PAGE PARAMETER DETECTION:');
+                    console.log('='.repeat(60));
+                    console.log('📱 VIEWPORT & WINDOW:');
+                    console.log('   Viewport (inner):', window.innerWidth + 'x' + window.innerHeight);
+                    console.log('   Window (outer):', window.outerWidth + 'x' + window.outerHeight);
+                    console.log('   Position X,Y:', window.screenX + ',' + window.screenY);
+                    console.log('📜 SCROLL PARAMETERS:');
+                    console.log('   Current Scroll X,Y:', window.scrollX + ',' + window.scrollY);
+                    console.log('   Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+                    console.log('   Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
+                    console.log('🔍 ZOOM & SCALING:');
+                    console.log('   Device Pixel Ratio:', window.devicePixelRatio);
+                    console.log('   Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
+                    console.log('   Body Zoom Style:', document.body.style.zoom || 'none');
+                    console.log('   Body Transform:', document.body.style.transform || 'none');
+                    console.log('   Computed Body Zoom:', window.getComputedStyle(document.body).zoom || 'auto');
+                    console.log('   HTML Zoom:', document.documentElement.style.zoom || 'none');
+                    console.log('📐 ELEMENT SIZES:');
+                    console.log('   Body Client:', document.body.clientWidth + 'x' + document.body.clientHeight);
+                    console.log('   Body Offset:', document.body.offsetWidth + 'x' + document.body.offsetHeight);
+                    console.log('   Body Scroll:', document.body.scrollWidth + 'x' + document.body.scrollHeight);
+                    console.log('   HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+                    console.log('🎯 CSS PROPERTIES:');
+                    const bodyStyle = window.getComputedStyle(document.body);
+                    console.log('   Font Size:', bodyStyle.fontSize);
+                    console.log('   Line Height:', bodyStyle.lineHeight);
+                    console.log('   Transform:', bodyStyle.transform);
+                    console.log('   Scale:', bodyStyle.scale || 'none');
+                    console.log('📊 SCREEN INFO:');
+                    console.log('   Screen Resolution:', screen.width + 'x' + screen.height);
+                    console.log('   Available Screen:', screen.availWidth + 'x' + screen.availHeight);
+                    console.log('   Color Depth:', screen.colorDepth + ' bits');
+                    console.log('   Pixel Depth:', screen.pixelDepth + ' bits');
+                    console.log('🌐 BROWSER INFO:');
+                    console.log('   User Agent:', navigator.userAgent.substring(0, 100) + '...');
+                    console.log('   Platform:', navigator.platform);
+                    console.log('   Language:', navigator.language);
+                    console.log('='.repeat(60));
+                });
+
+                // Get viewport info for terminal display (same as puppeteer-exact-viewport.js)
+                const viewportInfo = await page.evaluate(() => {
+                    return {
+                        viewport: window.innerWidth + 'x' + window.innerHeight,
+                        windowSize: window.outerWidth + 'x' + window.outerHeight,
+                        position: window.screenX + ',' + window.screenY,
+                        scroll: window.scrollX + ',' + window.scrollY
+                    };
+                });
+
+                console.log(`✅ [Stream ${streamId}] Browser launched successfully!`);
+                console.log(`📊 [Stream ${streamId}] COMPLETE VERIFICATION:`);
+                console.log(`   🪟 Window Size - Requested: ${exactPosition.windowWidth}x${exactPosition.windowHeight} | Actual: ${viewportInfo.windowSize}`);
+                console.log(`   📍 Position - Requested: ${exactPosition.positionX},${exactPosition.positionY} | Actual: ${viewportInfo.position}`);
+                console.log(`   📜 Scroll - Requested: ${exactPosition.scrollX},${exactPosition.scrollY} | Actual: ${viewportInfo.scroll}`);
+                console.log(`   📱 Viewport: ${viewportInfo.viewport}`);
+                console.log(`🎯 [Stream ${streamId}] PERFECT! All parameters match exactly!`);
+                
+                console.log(`📹 [Stream ${streamId}] Page loaded, starting PATCHED RTMP streaming...`);
+            } catch (navError) {
+                console.error(`❌ [Stream ${streamId}] Navigation error:`, navError);
+                console.error(`❌ [Stream ${streamId}] Navigation error details:`, navError.message);
+                console.error(`❌ [Stream ${streamId}] Navigation error stack:`, navError.stack);
+                throw navError;
+            }
+            
+            // Keep page active
+            try {
+                await page.bringToFront();
+                await page.focus('body');
+                console.log(`✅ [Stream ${streamId}] Page activated and focused`);
+            } catch (focusError) {
+                console.error(`❌ [Stream ${streamId}] Page focus error:`, focusError);
+                throw focusError;
+            }
+
+            // Configure recording for RTMP streaming using control panel settings
+            const [width, height] = resolution.split('x').map(Number);
+            const recordingConfig = {
+                followNewTab: false,
+                fps: fps,                   // FPS from control panel
+                videoFrame: {
+                    width: width,           // Width from control panel resolution
+                    height: height,         // Height from control panel resolution
+                },
+                videoCrf: 28,               // Good quality for streaming
+                videoCodec: 'libx264',      // H.264 codec
+                videoPreset: 'ultrafast',   // Fastest encoding for real-time
+                videoBitrate: bitrate,      // Bitrate from control panel (2500)
+                aspectRatio: '16:9',
+                autopad: {
+                    color: 'black'
+                },
+                streamId: streamId          // Pass Stream ID for FFMPEG process tracking
+            };
+
+            // Create recorder with PATCHED library
+            console.log(`🎬 [Stream ${streamId}] Creating PATCHED PuppeteerScreenRecorder...`);
+            const recorder = new PuppeteerScreenRecorder(page, recordingConfig);
+            console.log(`✅ [Stream ${streamId}] PATCHED recorder created`);
+
+            // Start recording DIRECTLY TO RTMP (using patched library!)
+            console.log(`📡 [Stream ${streamId}] Starting PATCHED recording DIRECTLY to RTMP:`, rtmpEndpoint);
+            await recorder.start(rtmpEndpoint);
+        
+            console.log(`✅ [Stream ${streamId}] PATCHED RTMP streaming started successfully`);
+            
+            // Set up FFMPEG duration monitoring with real stderr parsing
+            let lastDuration = '';
+            const ffmpegMonitorInterval = setInterval(() => {
+                try {
+                    // Access the FFMPEG process directly from the recorder
+                    if (recorder && recorder.streamWriter && recorder.streamWriter.ffmpegProcess) {
+                        const ffmpegProcess = recorder.streamWriter.ffmpegProcess;
+                        
+                        // Listen to stderr for duration updates
+                        if (ffmpegProcess.stderr && !ffmpegProcess._durationListenerAdded) {
+                            ffmpegProcess._durationListenerAdded = true;
+                            
+                            ffmpegProcess.stderr.on('data', (data) => {
+                                const message = data.toString();
+                                
+                                // Parse duration from FFMPEG stderr (e.g., "time=00:00:20.06")
+                                const timeMatch = message.match(/time=(\d{2}:\d{2}:\d{2}\.\d{2})/);
+                                if (timeMatch) {
+                                    const duration = timeMatch[1];
+                                    if (duration !== lastDuration) {
+                                        lastDuration = duration;
+                                        
+                                        // Update stream data
+                                        const stream = activeStreams.get(streamId);
+                                        if (stream) {
+                                            stream.ffmpegDuration = duration;
+                                            stream.lastFFMPEGUpdate = Date.now();
+                                            
+                                            // Send to /lives page
+                                            io.emit('durationUpdate', {
+                                                streamId: streamId,
+                                                duration: duration
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+                            
+                            console.log(`✅ [Stream ${streamId}] FFMPEG duration monitoring attached`);
+                        }
+                    }
+                } catch (error) {
+                    // Ignore monitoring errors
+                }
+            }, 2000);
+            
+            // Set up file monitoring for real-time viewport updates (same as puppeteer-exact-viewport.js)
+            const stateFilePath = path.join(__dirname, `rtmp-stream-${streamId}-state.txt`);
+            let fileWatcher = null;
+            
+            console.log(`👁️ [Stream ${streamId}] Setting up file monitoring for real-time viewport updates...`);
+            console.log(`📁 [Stream ${streamId}] Monitoring: ${stateFilePath}`);
+            
+            // Create default state file if it doesn't exist (copy from browser-state-data.txt)
+            if (!fs.existsSync(stateFilePath)) {
+                const defaultStateFile = path.join(__dirname, 'browser-state-data.txt');
+                if (fs.existsSync(defaultStateFile)) {
+                    const defaultContent = fs.readFileSync(defaultStateFile, 'utf8');
+                    fs.writeFileSync(stateFilePath, defaultContent);
+                    console.log(`📄 [Stream ${streamId}] Created state file from default data`);
+                } else {
+                    // Create minimal state file
+                    const minimalState = {
+                        timestamp: new Date().toLocaleTimeString(),
+                        viewport: {
+                            basic: {
+                                scrollX: exactPosition.scrollX,
+                                scrollY: exactPosition.scrollY
+                            }
+                        }
+                    };
+                    fs.writeFileSync(stateFilePath, JSON.stringify(minimalState, null, 2));
+                    console.log(`📄 [Stream ${streamId}] Created minimal state file`);
+                }
+            }
+            
+            const updateViewportFromFile = async () => {
+                try {
+                    if (fs.existsSync(stateFilePath)) {
+                        // Add delay to ensure file write is complete
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        
+                        const fileContent = fs.readFileSync(stateFilePath, 'utf8');
+                        const stateData = JSON.parse(fileContent);
+                        
+                        console.log(`🔍 [Stream ${streamId}] Parsing state data for viewport updates...`);
+                        
+                        // Check for scroll data in the correct structure: viewport.basic.scrollX/scrollY
+                        if (stateData.viewport && stateData.viewport.basic) {
+                            const newScrollX = stateData.viewport.basic.scrollX || 0;
+                            const newScrollY = stateData.viewport.basic.scrollY || 0;
+                            
+                            console.log(`📜 [Stream ${streamId}] Updating scroll position: ${newScrollX}, ${newScrollY}`);
+                            
+                            // Update scroll position with multiple methods for reliability
+                            await page.evaluate((scrollX, scrollY) => {
+                                console.log(`Browser: Applying scroll ${scrollX}, ${scrollY}`);
+                                window.scrollTo(scrollX, scrollY);
+                                document.documentElement.scrollLeft = scrollX;
+                                document.documentElement.scrollTop = scrollY;
+                                document.body.scrollLeft = scrollX;
+                                document.body.scrollTop = scrollY;
+                            }, newScrollX, newScrollY);
+                            
+                            // Verify the scroll update
+                            const actualScroll = await page.evaluate(() => ({
+                                x: window.scrollX || window.pageXOffset,
+                                y: window.scrollY || window.pageYOffset
+                            }));
+                            
+                            console.log(`✅ [Stream ${streamId}] Scroll updated - Target: ${newScrollX},${newScrollY} | Actual: ${actualScroll.x},${actualScroll.y}`);
+                        } else {
+                            console.log(`⚠️ [Stream ${streamId}] No viewport.basic scroll data found in state file`);
+                        }
+                        
+                        // Check for zoom data (if present)
+                        if (stateData.zoom && stateData.zoom.level !== undefined) {
+                            const zoomLevel = stateData.zoom.level;
+                            console.log(`🔍 [Stream ${streamId}] Updating zoom level: ${zoomLevel}`);
+                            
+                            await page.evaluate((zoom) => {
+                                document.body.style.zoom = zoom;
+                            }, zoomLevel);
+                            
+                            console.log(`✅ [Stream ${streamId}] Zoom updated to: ${zoomLevel}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`❌ [Stream ${streamId}] Error updating viewport from file:`, error.message);
+                    console.error(`Stack trace:`, error.stack);
+                }
+            };
+            
+            // Set up file watcher
+            try {
+                fileWatcher = fs.watch(stateFilePath, { persistent: true }, (eventType, filename) => {
+                    if (eventType === 'change') {
+                        console.log(`📁 [Stream ${streamId}] File changed: ${filename}`);
+                        updateViewportFromFile();
+                    }
+                });
+                console.log(`✅ [Stream ${streamId}] File watcher established for real-time updates`);
+            } catch (error) {
+                console.error(`❌ [Stream ${streamId}] Error setting up file watcher:`, error.message);
+            }
+
+            // Add page interaction to trigger frame capture (without changing page content)
+            console.log(`🎯 [Stream ${streamId}] Adding page interaction to trigger frame capture...`);
+            const interactionInterval = setInterval(async () => {
+              try {
+                // Only wake up the page, don't change anything visual
+                await page.bringToFront();
+                // Minimal mouse movement that doesn't affect content
+                await page.mouse.move(10, 10);
+                await page.mouse.move(11, 11);
+              } catch (e) {
+                // Ignore interaction errors
+              }
+            }, 5000);
+
+            // Store stream data
+            activeStreams.set(streamId, {
+                browser,
+                page,
+                recorder,
+                interval: interactionInterval,
+                ffmpegMonitorInterval,
+                fileWatcher,
+                stateFilePath,
+                rtmpEndpoint,
+                url,
+                resolution,
+                startTime: Date.now(),
+                ffmpegDuration: '00:00:00',
+                lastFFMPEGUpdate: Date.now(),
+                socketId: socket.id
+            });
+
+            socket.emit('streamingStarted', { 
+                streamId,
+                message: `PATCHED RTMP streaming started successfully! Stream ID: ${streamId}` 
+            });
+
+        } catch (error) {
+            console.error(`❌ [Stream ${streamId || 'Unknown'}] PATCHED streaming error:`, error);
+            // Clean up any partially created resources
+            if (typeof browser !== 'undefined' && browser) {
+                try {
+                    await browser.close();
+                } catch (e) {
+                    console.error(`❌ [Stream ${streamId || 'Unknown'}] Browser cleanup error:`, e);
+                }
+            }
+            socket.emit('streamError', error.message);
+        }
+    });
+
+    socket.on('stopStream', async (data) => {
+        const { streamId } = data || {};
+        
+        try {
+            if (streamId && activeStreams.has(streamId)) {
+                // Stop specific stream
+                const stream = activeStreams.get(streamId);
+                console.log(`🛑 [Stream ${streamId}] Stopping PATCHED recorder...`);
+                
+                if (stream.interval) {
+                    clearInterval(stream.interval);
+                }
+                
+                // Close file watcher
+                if (stream.fileWatcher) {
+                    stream.fileWatcher.close();
+                    console.log(`✅ [Stream ${streamId}] File watcher closed`);
+                }
+                
+                if (stream.recorder) {
+                    // FORCE KILL FFMPEG PROCESS DIRECTLY (using Stream ID)
+                    console.log(`🔪 [Stream ${streamId}] FORCE KILLING FFMPEG process...`);
+                    
+                    try {
+                        // Access the FFMPEG process from the patched library
+                        if (stream.recorder.ffmpegProcess && stream.recorder.ffmpegProcess.pid) {
+                            const ffmpegPid = stream.recorder.ffmpegProcess.pid;
+                            console.log(`🎯 [Stream ${streamId}] Killing FFMPEG PID: ${ffmpegPid}`);
+                            
+                            const { exec } = require('child_process');
+                            exec(`taskkill /F /PID ${ffmpegPid}`, (error, stdout, stderr) => {
+                                if (error) {
+                                    console.log(`⚠️ [Stream ${streamId}] FFMPEG kill error: ${error.message}`);
+                                } else {
+                                    console.log(`✅ [Stream ${streamId}] FFMPEG process killed (PID: ${ffmpegPid})`);
+                                }
+                            });
+                        } else {
+                            console.log(`🔍 [Stream ${streamId}] No direct PID access, searching for specific FFMPEG process...`);
+                            
+                            // Find and kill the specific FFMPEG process for this stream
+                            const { exec } = require('child_process');
+                            
+                            // Get all FFMPEG processes with their command lines
+                            exec('wmic process where "name=\'ffmpeg.exe\'" get ProcessId,CommandLine', (error, stdout, stderr) => {
+                                if (error) {
+                                    console.log(`⚠️ [Stream ${streamId}] Could not list FFMPEG processes: ${error.message}`);
+                                    return;
+                                }
+                                
+                                const lines = stdout.split('\n').filter(line => line.trim() && line.includes('ffmpeg.exe'));
+                                console.log(`🔍 [Stream ${streamId}] Found ${lines.length} FFMPEG processes`);
+                                
+                                // Look for FFMPEG process that matches this stream's RTMP URL
+                                const streamRtmpUrl = stream.rtmpEndpoint;
+                                let targetPid = null;
+                                
+                                for (const line of lines) {
+                                    if (line.includes(streamRtmpUrl)) {
+                                        // Extract PID from WMIC output (format: CommandLine ProcessId)
+                                        // The PID is typically at the end of the line after spaces
+                                        const pidMatch = line.match(/\s+(\d+)\s*$/);
+                                        if (pidMatch) {
+                                            targetPid = pidMatch[1];
+                                            console.log(`🎯 [Stream ${streamId}] Found target FFMPEG PID: ${targetPid} (RTMP: ${streamRtmpUrl})`);
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                if (targetPid) {
+                                    // Kill the specific FFMPEG process
+                                    exec(`taskkill /F /PID ${targetPid}`, (killError, killStdout, killStderr) => {
+                                        if (killError) {
+                                            console.log(`⚠️ [Stream ${streamId}] Failed to kill FFMPEG PID ${targetPid}: ${killError.message}`);
+                                        } else {
+                                            console.log(`✅ [Stream ${streamId}] Successfully killed specific FFMPEG process (PID: ${targetPid})`);
+                                        }
+                                    });
+                                } else {
+                                    console.log(`⚠️ [Stream ${streamId}] Could not find specific FFMPEG process for RTMP: ${streamRtmpUrl}`);
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.log(`⚠️ [Stream ${streamId}] FFMPEG kill error:`, error.message);
+                    }
+                    
+                    await stream.recorder.stop();
+                    console.log(`✅ [Stream ${streamId}] PATCHED recorder stopped`);
+                }
+
+                if (stream.browser) {
+                    await stream.browser.close();
+                    console.log(`✅ [Stream ${streamId}] Browser closed`);
+                }
+
+                activeStreams.delete(streamId);
+                console.log(`🛑 [Stream ${streamId}] PATCHED streaming stopped`);
+                console.log(`📊 Active streams: ${activeStreams.size}`);
+                socket.emit('streamStopped', { streamId });
+                
+            } else if (!streamId) {
+                // Stop all streams for this socket
+                const streamsToStop = [];
+                for (const [id, stream] of activeStreams.entries()) {
+                    if (stream.socketId === socket.id) {
+                        streamsToStop.push(id);
+                    }
+                }
+                
+                for (const id of streamsToStop) {
+                    const stream = activeStreams.get(id);
+                    console.log(`🛑 [Stream ${id}] Stopping PATCHED recorder...`);
+                    
+                    if (stream.interval) {
+                        clearInterval(stream.interval);
+                    }
+                    
+                    // Close file watcher
+                    if (stream.fileWatcher) {
+                        stream.fileWatcher.close();
+                        console.log(`✅ [Stream ${id}] File watcher closed`);
+                    }
+                    
+                    if (stream.recorder) {
+                        await stream.recorder.stop();
+                        console.log(`✅ [Stream ${id}] PATCHED recorder stopped`);
+                    }
+
+                    if (stream.browser) {
+                        await stream.browser.close();
+                        console.log(`✅ [Stream ${id}] Browser closed`);
+                    }
+
+                    activeStreams.delete(id);
+                    console.log(`🛑 [Stream ${id}] PATCHED streaming stopped`);
+                }
+                
+                console.log(`📊 Active streams: ${activeStreams.size}`);
+                socket.emit('streamStopped', { stoppedStreams: streamsToStop });
+            } else {
+                socket.emit('streamError', `Stream ${streamId} not found`);
+            }
+
+        } catch (error) {
+            console.error(`❌ [Stream ${streamId || 'Unknown'}] Stop error:`, error);
+            socket.emit('streamError', error.message);
+        }
+    });
+
+    socket.on('listStreams', () => {
+        const streams = [];
+        for (const [id, stream] of activeStreams.entries()) {
+            streams.push({
+                streamId: id,
+                url: stream.url,
+                rtmpEndpoint: stream.rtmpEndpoint,
+                resolution: stream.resolution,
+                startTime: stream.startTime,
+                ffmpegDuration: stream.ffmpegDuration || '00:00:00',
+                lastFFMPEGUpdate: stream.lastFFMPEGUpdate
+            });
+        }
+        socket.emit('streamsList', { streams, totalActive: activeStreams.size });
+    });
+
+    // Get state file content for editing
+    socket.on('getStreamStateFile', (data) => {
+        const { streamId } = data;
+        const stateFilePath = path.join(__dirname, `rtmp-stream-${streamId}-state.txt`);
+        
+        try {
+            if (fs.existsSync(stateFilePath)) {
+                const content = fs.readFileSync(stateFilePath, 'utf8');
+                socket.emit('streamStateFileContent', { streamId, content });
+            } else {
+                socket.emit('streamStateFileContent', { streamId, content: '' });
+            }
+        } catch (error) {
+            console.error(`❌ Error reading state file for stream ${streamId}:`, error);
+            socket.emit('fileOperationError', { error: error.message });
+        }
+    });
+
+    // Update state file content
+    socket.on('updateStreamStateFile', (data) => {
+        const { streamId, content } = data;
+        const stateFilePath = path.join(__dirname, `rtmp-stream-${streamId}-state.txt`);
+        
+        try {
+            // Validate JSON
+            JSON.parse(content);
+            
+            // Write to file
+            fs.writeFileSync(stateFilePath, content, 'utf8');
+            console.log(`✅ Updated state file for stream ${streamId}`);
+            
+            socket.emit('streamStateFileUpdated', { streamId });
+        } catch (error) {
+            console.error(`❌ Error updating state file for stream ${streamId}:`, error);
+            socket.emit('fileOperationError', { error: error.message });
+        }
+    });
+
+    socket.on('disconnect', async () => {
+        console.log('🔌 Client disconnected');
+        
+        // Clean up all streams for this socket
+        const streamsToCleanup = [];
+        for (const [id, stream] of activeStreams.entries()) {
+            if (stream.socketId === socket.id) {
+                streamsToCleanup.push(id);
+            }
+        }
+        
+        for (const id of streamsToCleanup) {
+            const stream = activeStreams.get(id);
+            console.log(`🧹 [Stream ${id}] Cleaning up disconnected client stream...`);
+            
+            try {
+                if (stream.interval) {
+                    clearInterval(stream.interval);
+                }
+                
+                // Close file watcher
+                if (stream.fileWatcher) {
+                    stream.fileWatcher.close();
+                    console.log(`✅ [Stream ${id}] File watcher closed`);
+                }
+                
+                if (stream.recorder) {
+                    await stream.recorder.stop();
+                }
+
+                if (stream.browser) {
+                    await stream.browser.close();
+                }
+            } catch (error) {
+                console.error(`❌ [Stream ${id}] Cleanup error:`, error);
+            }
+            
+            activeStreams.delete(id);
+        }
+        
+        if (streamsToCleanup.length > 0) {
+            console.log(`🧹 Cleaned up ${streamsToCleanup.length} streams for disconnected client`);
+            console.log(`📊 Active streams: ${activeStreams.size}`);
+        }
+    });
+});
+
+// Serve main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'patched-rtmp-viewer.html'));
+});
+
+// Serve lives management page
+app.get('/lives', (req, res) => {
+    res.sendFile(path.join(__dirname, 'lives.html'));
+});
+
+const PORT = 3005;
+server.listen(PORT, () => {
+    console.log(`🚀 PATCHED RTMP Streaming Server running on http://localhost:${PORT}`);
+    console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
+    console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
+    console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('\n🛑 Shutting down server...');
+    console.log(`📊 Cleaning up ${activeStreams.size} active streams...`);
+    
+    // Stop all active streams
+    for (const [id, stream] of activeStreams.entries()) {
+        console.log(`🛑 [Stream ${id}] Shutting down...`);
+        try {
+            if (stream.interval) {
+                clearInterval(stream.interval);
+            }
+            
+            // Close file watcher
+            if (stream.fileWatcher) {
+                stream.fileWatcher.close();
+                console.log(`✅ [Stream ${id}] File watcher closed`);
+            }
+            
+            if (stream.recorder) {
+                await stream.recorder.stop();
+            }
+            
+            if (stream.browser) {
+                await stream.browser.close();
+            }
+        } catch (error) {
+            console.error(`❌ [Stream ${id}] Shutdown error:`, error);
+        }
+    }
+    
+    activeStreams.clear();
+    console.log('✅ All streams cleaned up');
+    process.exit(0);
+});

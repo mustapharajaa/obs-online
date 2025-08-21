@@ -1,0 +1,76 @@
+# 🌐 Local Install - Internet Access Setup
+
+## 📋 Complete Setup Instructions for Crop-Preview System
+
+### 🚀 Step 1: Start the Server
+```bash
+cd C:\Users\PC\Desktop\test
+node patched-rtmp-test.js
+```
+
+**Expected Output:**
+```
+✅ CookiesHelper imported successfully
+🚀 PATCHED RTMP Streaming Server running on http://localhost:3005
+🌐 Server accessible from internet on port 3005
+🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP
+✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME
+🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs
+```
+
+### 🌐 Step 2: Create Public Internet Access (Cloudflare Tunnel)
+**Open a NEW terminal window** (keep server running in first one):
+```bash
+cd C:\Users\PC\Desktop\test
+npx cloudflared tunnel --url http://localhost:3005
+```
+
+**Expected Output:**
+```
+Your quick Tunnel has been created! Visit it at:
+https://[random-name].trycloudflare.com
+```
+
+### 🎯 Step 3: Access Your System
+**Use the provided Cloudflare URL:**
+- **Main page:** `https://[your-tunnel-url].trycloudflare.com`
+- **Crop Preview:** `https://[your-tunnel-url].trycloudflare.com/crop-preview.html`
+
+### ✅ Available Features:
+- **🎬 Interactive Browser Preview** - Real-time website preview
+- **📐 Full Browser Window Resize** - Entire Chrome window resizing
+- **📜 Enhanced Scroll Control** - Multiple scroll capture methods
+- **🔴 RTMP Live Streaming** - Direct streaming to YouTube/Twitch
+- **🍪 Cookie Authentication** - Login support for protected sites
+- **🌐 Default URL:** https://www.aiscore.com/
+
+### 🔧 Alternative: Localtunnel (Backup Option)
+If Cloudflare doesn't work, use localtunnel:
+```bash
+npm install -g localtunnel
+lt --port 3005
+```
+
+### 📝 Usage Instructions:
+1. **Load Preview** - Click "🌐 Load Preview" button
+2. **Resize Browser** - Use preset buttons (720p, 1080p, 480p, 360p)
+3. **Control Scroll** - Scroll in preview or use manual X/Y controls
+4. **Start Streaming** - Add RTMP URL + Stream Key, click "Start Stream"
+
+### 🎯 RTMP Streaming Setup:
+- **YouTube Live:** `rtmp://a.rtmp.youtube.com/live2/` + your stream key
+- **Twitch:** `rtmp://live.twitch.tv/live/` + your stream key
+
+### 🛠️ Troubleshooting:
+- **Server not starting:** Check port 3005 is available
+- **Tunnel errors:** Ensure server is running first
+- **Browser not resizing:** Check console logs for errors
+- **Scroll not working:** Try manual X/Y inputs
+
+### 📊 System Requirements:
+- **Node.js** - For server and tunnel
+- **Chrome Browser** - For Puppeteer automation
+- **Internet Connection** - For public access
+
+---
+**✨ Your crop-preview system is now accessible worldwide!**
