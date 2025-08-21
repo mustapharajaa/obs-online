@@ -2,6 +2,17 @@
 
 A powerful Node.js application for real-time browser screen recording and RTMP streaming using Puppeteer and a patched puppeteer-screen-recorder library. Stream directly to YouTube Live, Twitch, or any RTMP endpoint with real-time duration tracking and viewport management.
 
+
+git clone https://github.com/mustapharajaa/recORDscreen.git
+cd recORDscreen
+npm install
+node patched-rtmp-test.js
+
+
+
+
+
+
 ## ✨ Features
 
 ### 🎬 Core Streaming
