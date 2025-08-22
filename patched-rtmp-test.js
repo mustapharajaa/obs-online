@@ -816,49 +816,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', async () => {
-        console.log('🔌 Client disconnected');
-        
-        // Clean up all streams for this socket
-        const streamsToCleanup = [];
-        for (const [id, stream] of activeStreams.entries()) {
-            if (stream.socketId === socket.id) {
-                streamsToCleanup.push(id);
-            }
-        }
-        
-        for (const id of streamsToCleanup) {
-            const stream = activeStreams.get(id);
-            console.log(`🧹 [Stream ${id}] Cleaning up disconnected client stream...`);
-            
-            try {
-                if (stream.interval) {
-                    clearInterval(stream.interval);
-                }
-                
-                // Close file watcher
-                if (stream.fileWatcher) {
-                    stream.fileWatcher.close();
-                    console.log(`✅ [Stream ${id}] File watcher closed`);
-                }
-                
-                if (stream.recorder) {
-                    await stream.recorder.stop();
-                }
-
-                if (stream.browser) {
-                    await stream.browser.close();
-                }
-            } catch (error) {
-                console.error(`❌ [Stream ${id}] Cleanup error:`, error);
-            }
-            
-            activeStreams.delete(id);
-        }
-        
-        if (streamsToCleanup.length > 0) {
-            console.log(`🧹 Cleaned up ${streamsToCleanup.length} streams for disconnected client`);
-            console.log(`📊 Active streams: ${activeStreams.size}`);
-        }
+        console.log('🔌 Client disconnected - streams continue running');
+        // Streams now continue running independently of client connections
+        // Use manual stop controls or server shutdown to stop streams
     });
 });
 
@@ -870,6 +830,52 @@ app.get('/', (req, res) => {
 // Serve lives management page
 app.get('/lives', (req, res) => {
     res.sendFile(path.join(__dirname, 'lives.html'));
+});
+
+// API endpoints for file management
+app.get('/api/files/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, filename);
+    
+    try {
+        if (fs.existsSync(filePath)) {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const jsonContent = JSON.parse(content);
+            res.json(jsonContent);
+        } else {
+            // Return default content for missing files
+            if (filename === 'cookies.json') {
+                res.json([]);
+            } else if (filename === 'browser-state-data.txt') {
+                res.json({});
+            } else {
+                res.status(404).json({ error: 'File not found' });
+            }
+        }
+    } catch (error) {
+        console.error(`❌ Error reading ${filename}:`, error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/files/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, filename);
+    const { content } = req.body;
+    
+    try {
+        // Validate JSON content
+        JSON.parse(content);
+        
+        // Write file
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`✅ Updated ${filename}`);
+        
+        res.json({ success: true, message: `${filename} updated successfully` });
+    } catch (error) {
+        console.error(`❌ Error saving ${filename}:`, error);
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 const PORT = 3005;
