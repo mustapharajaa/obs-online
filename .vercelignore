@@ -1,0 +1,34 @@
+# Backend files - should not be deployed to Vercel
+*.js
+!public/**/*.js
+
+# Node.js dependencies
+node_modules/
+package.json
+package-lock.json
+
+# Backend configuration
+config/
+patched-rtmp-test.js
+puppeteer-exact-viewport.js
+viewport-detection.js
+dynamic-scoreboard.js
+cookies-helper.js
+
+# Puppeteer library
+puppeteer-screen-recorder-main/
+
+# Svelte browser (backend component)
+svelte-browser-main/
+
+# Environment files
+.env*
+!.env.example
+
+# Local development files
+browser-state-data*.txt
+locall-install
+VIEWPORT*
+
+# License and docs (keep README)
+LICENSE
