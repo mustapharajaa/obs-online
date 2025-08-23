@@ -1,5 +1,7 @@
 {
   "buildCommand": "echo 'Static files only - no build needed'",
   "outputDirectory": "public",
-  "installCommand": "echo 'No dependencies to install'"
+  "installCommand": "echo 'No dependencies to install'",
+  "cleanUrls": true,
+  "trailingSlash": false
 }

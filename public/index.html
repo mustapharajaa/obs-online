@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>recORDscreen - RTMP Streaming Control Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        .nav-link:hover {
+            background: #5a6fd8;
+        }
+        .description {
+            margin: 30px 0;
+            color: #666;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 recORDscreen</h1>
+        <p class="description">
+            Professional RTMP streaming control panel for YouTube Live, Twitch, and other platforms.
+            High-performance screen recording with direct streaming capabilities.
+        </p>
+        
+        <div class="nav-links">
+            <a href="/rtmp-control-panel.html" class="nav-link">📺 Control Panel</a>
+            <a href="/lives.html" class="nav-link">🔴 Live Streams</a>
+            <a href="/backend-admin.html" class="nav-link">⚙️ Admin Panel</a>
+        </div>
+        
+        <p class="description">
+            <strong>Note:</strong> For full functionality, run the backend server locally on port 3005.
+            This is a static preview of the control interface.
+        </p>
+    </div>
+</body>
+</html>
