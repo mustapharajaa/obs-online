@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // TEST THE PATCHED PUPPETEER-SCREEN-RECORDER WITH DIRECT RTMP OUTPUT
 const express = require('express');
 const http = require('http');
@@ -123,6 +125,11 @@ function ensureRequiredFiles() {
 
 // Initialize required files on server startup
 ensureRequiredFiles();
+
+// Verify .env variables are loaded
+console.log('✅ SERVER_PORT:', process.env.SERVER_PORT);
+console.log('✅ PRIMARY_DOMAIN:', process.env.PRIMARY_DOMAIN);
+
 
 const app = express();
 const server = http.createServer(app);
