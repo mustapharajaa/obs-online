@@ -257,26 +257,37 @@
 
             loadBackends() {
                 const defaultBackends = {
+                    rdp: {
+                        name: 'RDP Backend',
+                        url: 'http://YOUR_RDP_IP_HERE:3005',
+                        websocket: 'ws://YOUR_RDP_IP_HERE:3005',
+                        type: 'rdp',
+                        description: 'Remote Desktop Protocol server',
+                        active: true
+                    },
                     local: {
                         name: 'Local Development',
                         url: 'http://localhost:3005',
                         websocket: 'ws://localhost:3005',
                         type: 'local',
-                        description: 'Local development server'
+                        description: 'Local development server',
+                        active: false
                     },
                     redis: {
                         name: 'Redis Backend',
                         url: 'https://your-redis-backend.vercel.app',
                         websocket: 'wss://your-redis-backend.vercel.app',
                         type: 'redis',
-                        description: 'Vercel + Redis deployment'
+                        description: 'Vercel + Redis deployment',
+                        active: false
                     },
                     vpc: {
                         name: 'VPC Backend',
                         url: 'https://your-vpc-backend.com',
                         websocket: 'wss://your-vpc-backend.com',
                         type: 'vpc',
-                        description: 'Private cloud deployment'
+                        description: 'Private cloud deployment',
+                        active: false
                     }
                 };
 
