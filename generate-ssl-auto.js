@@ -91,28 +91,9 @@ try {
         }
     });
     
-    // Create a basic certificate (Note: This is very basic and for development only)
-    const cert = `-----BEGIN CERTIFICATE-----
-MIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNV
-BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
-aWRnaXRzIFB0eSBMdGQwHhcNMTIwOTEyMjE1MjAyWhcNMTUwOTEyMjE1MjAyWjBF
-MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
-ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
-CgKCAQEAu1SU1L7VLPHCgcUDigIjBh4hneQbelnXpBfCPv9RzEJJ/o9TcogrndbO
-HY1UAR13v6IYJ01nbYSmtk4mwTKpBaHwYqAjmgE/Y+PWZZqjjif1yvIGH6kxUstk
-HmFB6clwfE0li6wXFO4+RjmiuK9eEWK2qZQYdfpQHs/E3Yyx8mU6Q4M4nTgFrx3z
-VDY70KGqt9HCDYcNUgMMc0D+WlgksnKIuTTYo3kuD4i5Xl8OphlolQQdhf2QNYUs
-vWxZseBOjztL3xCh2h5W8fk3vJCnyRCNgdog2OQPA440rBJWACo1kWC7xTgbZ0EU
-RNflfhLabHYx8RXpcCHKnpNKdlLMQwIDAQABo1AwTjAdBgNVHQ4EFgQUU3m/Wqor
-Ss9UgOHYm8Cd8rIDZsswHwYDVR0jBBgwFoAUU3m/WqorSs9UgOHYm8Cd8rIDZssw
-DAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOCAQEAWUesIYSKF8mciVMeuoCF
-GsY8Ti1CyxGQYiXdibAVQUXvd0l9yMk3jL2AVanJskDQVyOL7RgXGChYVydWIrDh
-LtdWiM7f4hMDS/GQXB3+OjI1uKMBS4hIkK8NOlD8IGddAvwinrOqGFo/4UOuc0Mz
-xn6s6EtZTVRbzaD4F4HdOss9nMcoyS9EVdprfVlNzMoKBkuaMmb2RFc1BjKu2lZi
-6bg8/4CP2HuMOpJeq4zTMg7HrptnkQ8fmMYgOrgiGOoYFKHzAliDsoAzAZxsRBDi
-LA11MRiNapvRSFq5gTpCe5FIEV7QpZpRvCy8A4oMmIAC3mxw24YLBD4Cfp2d9aDU
-Lw==
------END CERTIFICATE-----`;
+    console.log('⚠️ Using fallback - HTTP-only mode recommended');
+    console.log('💡 For production, install OpenSSL and run: npm run setup:ssl');
+    process.exit(1);
     
     // Write files
     fs.writeFileSync(keyFile, privateKey);

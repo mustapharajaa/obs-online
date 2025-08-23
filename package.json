@@ -11,8 +11,9 @@
     "deploy:redis": "vercel --prod --env BACKEND_TYPE=redis",
     "deploy:vpc": "vercel --prod --env BACKEND_TYPE=vpc",
     "postinstall": "npx puppeteer browsers install chrome",
-    "setup": "cd puppeteer-screen-recorder-main && npm install && npm run build && cd .. && npm run setup:ssl",
+    "setup": "node install-openssl.js && cd puppeteer-screen-recorder-main && npm install && npm run build && cd .. && npm run setup:ssl",
     "setup:ssl": "node generate-ssl-auto.js",
+    "install:openssl": "node install-openssl.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
