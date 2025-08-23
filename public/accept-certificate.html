@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept RDP Backend Certificate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .step {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .certificate-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .certificate-link:hover {
+            background: #c82333;
+        }
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .back-link:hover {
+            background: #218838;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Accept RDP Backend Certificate</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> You must accept the SSL certificate to connect to the RDP backend.
+        </div>
+        
+        <div class="step">
+            <h3>Step 1: Click the link below</h3>
+            <a href="https://45.76.80.59:3006" target="_blank" class="certificate-link">
+                🔗 Open RDP Backend Server
+            </a>
+            <p><strong>You will see a security warning - this is normal!</strong></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Accept the certificate</h3>
+            <p>1. Click <strong>"Advanced"</strong></p>
+            <p>2. Click <strong>"Proceed to 45.76.80.59 (unsafe)"</strong></p>
+            <p>3. You should see the RDP backend page</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Return to backend admin</h3>
+            <a href="backend-admin.html" class="back-link">
+                ← Back to Backend Admin
+            </a>
+            <p>The RDP backend connection should now work!</p>
+        </div>
+
+        <div class="warning">
+            <strong>Note:</strong> This only needs to be done once per browser. The certificate will be remembered.
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect back to backend-admin after 30 seconds
+        setTimeout(() => {
+            if (confirm('Ready to return to Backend Admin?')) {
+                window.location.href = 'backend-admin.html';
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
