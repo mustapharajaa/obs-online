@@ -136,9 +136,9 @@ const app = express();
 
 // SSL Certificate configuration
 function createSSLOptions() {
-    const certPath = path.join(__dirname, 'ssl');
+    const certPath = path.join(__dirname, 'certificates');
     const keyFile = path.join(certPath, 'server.key');
-    const certFile = path.join(certPath, 'server.cert');
+    const certFile = path.join(certPath, 'server.crt');
     
     if (fs.existsSync(keyFile) && fs.existsSync(certFile)) {
         console.log('✅ SSL certificates found, enabling HTTPS');
