@@ -17,7 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (typeof io !== 'undefined') {
-        window.socket = io(backendUrl);
+        // Configure Socket.IO to ignore SSL certificate errors for self-signed certificates
+        const socketOptions = {
+            rejectUnauthorized: false,
+            transports: ['websocket', 'polling']
+        };
+        
+        window.socket = io(backendUrl, socketOptions);
         
         window.socket.on('connect', () => {
             console.log(`✅ Connected to backend at ${backendUrl}`);
@@ -36,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.socket.on('connect_error', (error) => {
             console.log('❌ Connection error:', error);
             if (window.showNotification) {
-                window.showNotification('❌ Cannot connect to backend', 'error');
+                window.showNotification('❌ Cannot connect to RDP Backend', 'error');
             }
         });
     }
