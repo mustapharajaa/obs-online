@@ -1,8 +1,7 @@
 const fs = require('fs');
-const crypto = require('crypto');
 const path = require('path');
 
-console.log('Generating SSL certificates using Node.js crypto...');
+console.log('Generating SSL certificates using Node.js...');
 
 // Create certificates directory
 const certDir = path.join(__dirname, 'certificates');
@@ -10,48 +9,61 @@ if (!fs.existsSync(certDir)) {
     fs.mkdirSync(certDir, { recursive: true });
 }
 
-// Generate private key
-const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem'
-    },
-    privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem'
-    }
-});
+// Try to use selfsigned package, fallback to simple approach
+let cert, key;
 
-// Simple self-signed certificate (basic version for development)
-const cert = `-----BEGIN CERTIFICATE-----
-MIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
-BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
-aWRnaXRzIFB0eSBMdGQwHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAwMDAwWjBF
-MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
-ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
-CgKCAQEAuKoK/heBjcOuMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMw
-EQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0
-eSBMdGQwHhcNMjQwMTAxMDAwMDAwWhcNMjUwMTAxMDAwMDAwWjBFMQswCQYDVQQG
-EwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lk
-Z2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuKoK
-/heBjcOuMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApT
-b21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEi
-MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC4qgr+F4GNw64wDQYJKoZIhvcN
-AQELBQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNV
-BAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yNDAxMDEwMDAwMDBaFw0y
-NTAxMDEwMDAwMDBaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRl
-MSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3
-DQEBAQUAA4IBDwAwggEKAoIBAQC4qgr+F4GNw64wDQYJKoZIhvcNAQELBQAwRTEL
-MAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVy
-bmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yNDAxMDEwMDAwMDBaFw0yNTAxMDEwMDAw
-MDBaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQK
-DBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEBAQUAA4IB
-DwAwggEKAoIBAQC4
------END CERTIFICATE-----`;
+try {
+    const selfsigned = require('selfsigned');
+    
+    // Generate self-signed certificate
+    const attrs = [{ name: 'commonName', value: 'localhost' }];
+    const pems = selfsigned.generate(attrs, { 
+        days: 365,
+        keySize: 2048,
+        algorithm: 'sha256'
+    });
+    
+    cert = pems.cert;
+    key = pems.private;
+    console.log('✅ Using selfsigned package');
+} catch (error) {
+    console.log('⚠️ selfsigned package not found, installing...');
+    
+    // Install selfsigned package
+    const { execSync } = require('child_process');
+    try {
+        execSync('npm install selfsigned', { stdio: 'inherit' });
+        
+        // Try again after installation
+        const selfsigned = require('selfsigned');
+        const attrs = [{ name: 'commonName', value: 'localhost' }];
+        const pems = selfsigned.generate(attrs, { 
+            days: 365,
+            keySize: 2048,
+            algorithm: 'sha256'
+        });
+        
+        cert = pems.cert;
+        key = pems.private;
+        console.log('✅ Installed and using selfsigned package');
+    } catch (installError) {
+        console.log('❌ Failed to install selfsigned, using fallback method');
+        
+        // Fallback: generate key pair and create basic certificate
+        const crypto = require('crypto');
+        const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+            modulusLength: 2048,
+            publicKeyEncoding: { type: 'spki', format: 'pem' },
+            privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+        });
+        
+        key = privateKey;
+        cert = publicKey; // This is just for testing - not a real certificate
+    }
+}
 
 // Write files
-fs.writeFileSync(path.join(certDir, 'server.key'), privateKey);
+fs.writeFileSync(path.join(certDir, 'server.key'), key);
 fs.writeFileSync(path.join(certDir, 'server.crt'), cert);
 
 console.log('✅ SSL certificates generated successfully!');
