@@ -1,5 +1,8 @@
 require('dotenv').config();
 
+// Disable SSL certificate verification for self-signed certificates
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+
 // TEST THE PATCHED PUPPETEER-SCREEN-RECORDER WITH DIRECT RTMP OUTPUT
 const express = require('express');
 const http = require('http');
