@@ -3,6 +3,7 @@ require('dotenv').config();
 // TEST THE PATCHED PUPPETEER-SCREEN-RECORDER WITH DIRECT RTMP OUTPUT
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const { Server } = require('socket.io');
 const puppeteer = require('puppeteer');
 const path = require('path');
@@ -132,13 +133,53 @@ console.log('✅ PRIMARY_DOMAIN:', process.env.PRIMARY_DOMAIN);
 
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
+
+// SSL Certificate configuration
+function createSSLOptions() {
+    const certPath = path.join(__dirname, 'ssl');
+    const keyFile = path.join(certPath, 'server.key');
+    const certFile = path.join(certPath, 'server.cert');
+    
+    if (fs.existsSync(keyFile) && fs.existsSync(certFile)) {
+        console.log('✅ SSL certificates found, enabling HTTPS');
+        return {
+            key: fs.readFileSync(keyFile),
+            cert: fs.readFileSync(certFile)
+        };
+    }
+    
+    console.log('⚠️ SSL certificates not found, using HTTP only');
+    return null;
+}
+
+// Create servers (HTTP and optionally HTTPS)
+const sslOptions = createSSLOptions();
+const httpServer = http.createServer(app);
+const httpsServer = sslOptions ? https.createServer(sslOptions, app) : null;
+
+// Socket.IO setup
+const io = new Server(httpsServer || httpServer, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
     }
 });
+
+// If HTTPS is available, also attach Socket.IO to HTTP server for compatibility
+if (httpsServer) {
+    const httpIO = new Server(httpServer, {
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST"]
+        }
+    });
+    
+    // Forward HTTP Socket.IO events to main HTTPS Socket.IO
+    httpIO.on('connection', (socket) => {
+        console.log('🔗 HTTP client connected, forwarding to HTTPS handler');
+        io.emit('connection', socket);
+    });
+}
 
 app.use(express.static('.'));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
@@ -1035,14 +1076,27 @@ app.post('/api/files/:filename', (req, res) => {
     }
 });
 
-const PORT = 3005;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 PATCHED RTMP Streaming Server running on http://0.0.0.0:${PORT}`);
-    console.log(`🌐 Server accessible from internet at: http://YOUR_SERVER_IP:${PORT}`);
-    console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
-    console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
-    console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);
+const HTTP_PORT = process.env.SERVER_PORT || 3005;
+const HTTPS_PORT = process.env.HTTPS_PORT || 3006;
+
+// Start HTTP server
+httpServer.listen(HTTP_PORT, '0.0.0.0', () => {
+    console.log(`🚀 HTTP Server running on http://0.0.0.0:${HTTP_PORT}`);
 });
+
+// Start HTTPS server if SSL certificates are available
+if (httpsServer) {
+    httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
+        console.log(`🔒 HTTPS Server running on https://0.0.0.0:${HTTPS_PORT}`);
+        console.log(`🌐 HTTPS accessible at: https://45.76.80.59:${HTTPS_PORT}`);
+    });
+} else {
+    console.log(`⚠️ HTTPS disabled - no SSL certificates found`);
+}
+
+console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
+console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
+console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
