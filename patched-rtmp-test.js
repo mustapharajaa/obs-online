@@ -165,22 +165,6 @@ const io = new Server(httpsServer || httpServer, {
     }
 });
 
-// If HTTPS is available, also attach Socket.IO to HTTP server for compatibility
-if (httpsServer) {
-    const httpIO = new Server(httpServer, {
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        }
-    });
-    
-    // Forward HTTP Socket.IO events to main HTTPS Socket.IO
-    httpIO.on('connection', (socket) => {
-        console.log('🔗 HTTP client connected, forwarding to HTTPS handler');
-        io.emit('connection', socket);
-    });
-}
-
 app.use(express.static('.'));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -1088,10 +1072,10 @@ httpServer.listen(HTTP_PORT, '0.0.0.0', () => {
 if (httpsServer) {
     httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
         console.log(`🔒 HTTPS Server running on https://0.0.0.0:${HTTPS_PORT}`);
-        console.log(`🌐 HTTPS accessible at: https://45.76.80.59:${HTTPS_PORT}`);
+        console.log(`🌐 Use HTTPS backend: https://45.76.80.59:${HTTPS_PORT}`);
     });
 } else {
-    console.log(`⚠️ HTTPS disabled - no SSL certificates found`);
+    console.log(`⚠️ HTTPS disabled - run 'npm run setup:ssl' to enable`);
 }
 
 console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
