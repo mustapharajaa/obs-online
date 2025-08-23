@@ -4,10 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeBackend = localStorage.getItem('selectedBackend') || 'rdp';
     const backendConfigs = JSON.parse(localStorage.getItem('backendConfigs') || '{}');
     
+    console.log('🔧 Debug - Active Backend:', activeBackend);
+    console.log('🔧 Debug - Backend Configs:', backendConfigs);
+    
     let backendUrl = 'http://YOUR_RDP_IP_HERE:3005'; // Default fallback
     
     if (backendConfigs[activeBackend]) {
         backendUrl = backendConfigs[activeBackend].url;
+        console.log('🔧 Debug - Using configured URL:', backendUrl);
+    } else {
+        console.log('🔧 Debug - No config found, using fallback URL');
     }
     
     if (typeof io !== 'undefined') {

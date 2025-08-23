@@ -669,7 +669,7 @@ io.on('connection', (socket) => {
                 socketId: socket.id
             });
 
-            socket.emit('streamingStarted', { 
+            socket.emit('streamStarted', { 
                 streamId,
                 message: `PATCHED RTMP streaming started successfully! Stream ID: ${streamId}` 
             });
@@ -814,8 +814,68 @@ io.on('connection', (socket) => {
                     }
                     
                     if (stream.recorder) {
-                        await stream.recorder.stop();
-                        console.log(`✅ [Stream ${id}] PATCHED recorder stopped`);
+                        // FORCE KILL FFMPEG PROCESS DIRECTLY (using Stream ID)
+                        console.log(`🔪 [Stream ${id}] FORCE KILLING FFMPEG process...`);
+                        
+                        try {
+                            if (stream.ffmpegPid) {
+                                const { exec } = require('child_process');
+                                exec(`taskkill /F /PID ${stream.ffmpegPid}`, (error, stdout, stderr) => {
+                                    if (error) {
+                                        console.log(`⚠️ [Stream ${id}] FFMPEG kill error: ${error.message}`);
+                                    } else {
+                                        console.log(`✅ [Stream ${id}] FFMPEG process killed successfully`);
+                                    }
+                                });
+                            } else {
+                                // Revert to original /lives page logic that worked
+                                console.log(`🔍 [Stream ${id}] No direct PID access, searching for specific FFMPEG process...`);
+                                
+                                const { execAsync } = require('util').promisify(require('child_process').exec);
+                                // Debug: Show what we're searching for
+                                console.log(`🔍 [Stream ${id}] Searching for FFMPEG with pattern: rtmp-stream-${id}`);
+                                
+                                // Get all FFMPEG processes with their command lines for debugging
+                                const debugQuery = `wmic process where "name='ffmpeg.exe'" get processid,commandline /format:list`;
+                                
+                                try {
+                                    const debugResult = await execAsync(debugQuery);
+                                    console.log(`🔍 [Stream ${id}] All FFMPEG processes:`);
+                                    console.log(debugResult.stdout);
+                                } catch (debugError) {
+                                    console.log(`⚠️ [Stream ${id}] Debug query failed: ${debugError.message}`);
+                                }
+                                
+                                // More precise WMI query to avoid cross-stream conflicts - match the actual RTMP URL pattern
+                                const wmiQuery = `wmic process where "name='ffmpeg.exe' and commandline like '%rtmp-stream-${id}'" get processid /format:value`;
+                                
+                                try {
+                                    const wmiResult = await execAsync(wmiQuery);
+                                    const pidMatch = wmiResult.stdout.match(/(\d+)/);
+                                    if (pidMatch) {
+                                        const targetPid = pidMatch[1];
+                                        console.log(`🎯 [Stream ${id}] Found specific FFMPEG PID via WMI: ${targetPid}`);
+                                        
+                                        await execAsync(`taskkill /F /PID ${targetPid}`);
+                                        console.log(`✅ [Stream ${id}] Successfully killed specific FFMPEG process (PID: ${targetPid})`);
+                                    } else {
+                                        console.log(`⚠️ [Stream ${id}] No specific FFMPEG process found via WMI`);
+                                    }
+                                } catch (wmiError) {
+                                    console.log(`⚠️ [Stream ${id}] WMI search error: ${wmiError.message}`);
+                                }
+                            }
+                        } catch (killError) {
+                            console.log(`⚠️ [Stream ${id}] Force kill error: ${killError.message}`);
+                        }
+                        
+                        try {
+                            await stream.recorder.stop();
+                            console.log(`✅ [Stream ${id}] PATCHED recorder stopped`);
+                        } catch (stopError) {
+                            console.log(`⚠️ [Stream ${id}] Recorder stop error: ${stopError.message}`);
+                        }
+                        
                     }
 
                     if (stream.browser) {

@@ -988,7 +988,12 @@
         // Stop streaming using Socket.IO (same as patched-rtmp-viewer.html)
         document.getElementById('stopStream').addEventListener('click', () => {
             showStatus('Stopping stream...', 'info');
-            socket.emit('stopStream');
+            // Use specific streamId like /lives page does
+            if (window.currentStreamId) {
+                socket.emit('stopStream', { streamId: window.currentStreamId });
+            } else {
+                socket.emit('stopStream', {});
+            }
         });
 
         // Test connection
@@ -1003,6 +1008,7 @@
         // Socket event handlers (same as patched-rtmp-viewer.html)
         socket.on('streamStarted', (data) => {
             console.log('Stream started:', data);
+            window.currentStreamId = data.streamId; // Store streamId for stopping
             setStreamingState(true);
             showStatus('Stream started successfully!', 'success');
             startDurationTimer();
@@ -1203,7 +1209,11 @@
                     if (maxDurationMs && elapsed >= maxDurationMs) {
                         showNotification('⏰ Auto-stopping stream - Duration limit reached!', 'info');
                         // Force stop the stream
-                        socket.emit('stopStream');
+                        if (window.currentStreamId) {
+                            socket.emit('stopStream', { streamId: window.currentStreamId });
+                        } else {
+                            socket.emit('stopStream', {});
+                        }
                         stopDurationTimer();
                     }
                 }

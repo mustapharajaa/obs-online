@@ -18,8 +18,8 @@ npm run setup
 # 5. Start server
 npm start
 ```
-http://192.248.183.230:3005/lives
-http://192.248.183.230:3005
+http://ip:3005/lives
+http://ip:3005
 
 # Add Firewall Group
 AWS/Azure/Google Cloud Security Groups: Firewall Group
@@ -34,7 +34,10 @@ netsh advfirewall firewall show rule name="Node.js RTMP Server"
 
 
 
-
+## 🚀 backend configuration 
+1 vercel fontend 
+2 rdp/vps bacend 
+https://ip:3005/backend-admin.html
 
 
 
