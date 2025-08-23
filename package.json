@@ -6,6 +6,10 @@
   "scripts": {
     "start": "node patched-rtmp-test.js",
     "dev": "nodemon patched-rtmp-test.js",
+    "build": "echo 'Frontend build complete'",
+    "deploy": "vercel --prod",
+    "deploy:redis": "vercel --prod --env BACKEND_TYPE=redis",
+    "deploy:vpc": "vercel --prod --env BACKEND_TYPE=vpc",
     "postinstall": "npx puppeteer browsers install chrome",
     "setup": "cd puppeteer-screen-recorder-main && npm install && npm run build && cd ..",
     "test": "echo \"Error: no test specified\" && exit 1"

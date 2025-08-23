@@ -479,10 +479,8 @@
         }
 
         function stopStream(streamId) {
-            if (confirm(`Are you sure you want to stop Stream ${streamId}?`)) {
-                console.log('Stopping stream:', streamId);
-                socket.emit('stopStream', { streamId });
-            }
+            console.log('Stopping stream:', streamId);
+            socket.emit('stopStream', { streamId });
         }
 
         function editStateFile(streamId) {

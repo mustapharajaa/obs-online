@@ -42,10 +42,11 @@ export default class PageVideoStreamWriter extends EventEmitter {
   private writerPromise: Promise<boolean>;
   private ffmpegProcess: ChildProcess;
   
-  // RTMP Retry Logic
-  private maxRetries = 3;
+  // RTMP Retry Logic - DISABLED
+  private maxRetries = 0;
   private currentRetry = 0;
   private originalRtmpUrl: string;
+  private forceTerminated = false;
 
   constructor(destinationSource: string | Writable, options?: VideoOptions) {
     super();
@@ -217,15 +218,19 @@ export default class PageVideoStreamWriter extends EventEmitter {
 
       this.ffmpegProcess = spawn(ffmpegPath, videoArgs, { stdio: ['pipe', 'pipe', 'pipe'] });
 
-      this.ffmpegProcess.stdout.on('data', (data) => {
-        console.log(`🔧 PATCHED LIBRARY: FFMPEG [Stream ${this.streamId}]: ${data.toString()}`);
+      this.ffmpegProcess.stdout.on('data', () => {
+        // Suppress verbose FFMPEG output
       });
 
       this.ffmpegProcess.stderr.on('data', (data) => {
         const message = data.toString();
-        if (message.trim()) {
-          console.log(`🔧 PATCHED LIBRARY: FFMPEG [Stream ${this.streamId}]: ${message}`);
+        // Show useful progress info (fps, bitrate, speed) but filter out verbose startup info
+        if (message.includes('frame=') || message.includes('fps=') || message.includes('bitrate=') || message.includes('speed=')) {
+          console.log(`🔧 PATCHED LIBRARY: FFMPEG [Stream ${this.streamId}]: ${message.trim()}`);
+        } else if (message.includes('Error') || message.includes('failed')) {
+          console.log(`🚨 PATCHED LIBRARY: FFMPEG [Stream ${this.streamId}] ERROR: ${message}`);
         }
+        // Suppress verbose startup configuration output
       });
 
       this.ffmpegProcess.on('close', (code) => {
@@ -235,14 +240,29 @@ export default class PageVideoStreamWriter extends EventEmitter {
           console.error(`🚨 PATCHED LIBRARY: [Stream ${this.streamId}] ${errorMessage}`);
           this.emit('videoStreamWriterError', errorMessage);
           
-          // Check if this is a connection error that should trigger retry
+          // NO RETRIES when force terminated
+          if (this.forceTerminated) {
+            console.log(`🛡️ PATCHED LIBRARY: [Stream ${this.streamId}] Force terminated - no retry allowed`);
+            resolve(true);
+            return;
+          }
+          
+          // Kill FFMPEG process immediately on any error
+          if (this.ffmpegProcess && this.ffmpegProcess.pid) {
+            console.log(`💀 PATCHED LIBRARY: [Stream ${this.streamId}] Killing FFMPEG PID ${this.ffmpegProcess.pid}`);
+            this.ffmpegProcess.kill('SIGKILL');
+          }
+          
+          // Only retry once for genuine network errors (not forced termination)
           if (this.shouldRetryRTMPConnection(code) && this.currentRetry < this.maxRetries) {
             this.currentRetry++;
-            console.log(`🔄 PATCHED LIBRARY: [Stream ${this.streamId}] RTMP connection failed, retrying (${this.currentRetry}/${this.maxRetries})...`);
+            console.log(`🔄 PATCHED LIBRARY: [Stream ${this.streamId}] Network error, retrying (${this.currentRetry}/${this.maxRetries})...`);
             
             // Wait 2 seconds before retry
             setTimeout(() => {
-              this.startRTMPStreamWithRetry(this.originalRtmpUrl);
+              if (!this.forceTerminated) {
+                this.startRTMPStreamWithRetry(this.originalRtmpUrl);
+              }
             }, 2000);
             return;
           }
@@ -254,7 +274,7 @@ export default class PageVideoStreamWriter extends EventEmitter {
             if (this.currentRetry >= this.maxRetries) {
               console.error(`❌ PATCHED LIBRARY: [Stream ${this.streamId}] Max retries (${this.maxRetries}) exceeded, giving up`);
             }
-            return reject(new Error(errorMessage));
+            resolve(true);  // Don't reject, just resolve to prevent hanging
           }
         } else {
           resolve(true);
@@ -529,5 +549,17 @@ export default class PageVideoStreamWriter extends EventEmitter {
   // Expose FFMPEG process PID for targeted termination
   public getFfmpegPid(): number | null {
     return this.ffmpegProcess?.pid || null;
+  }
+
+  // Mark stream as force terminated to prevent retries
+  public markForceTerminated(): void {
+    this.forceTerminated = true;
+    console.log(`🚫 PATCHED LIBRARY: [Stream ${this.streamId}] Marked as force terminated - retries disabled`);
+    
+    // Immediately kill FFMPEG process when force terminated
+    if (this.ffmpegProcess && this.ffmpegProcess.pid) {
+      console.log(`💀 PATCHED LIBRARY: [Stream ${this.streamId}] Force killing FFMPEG PID ${this.ffmpegProcess.pid}`);
+      this.ffmpegProcess.kill('SIGKILL');
+    }
   }
 }

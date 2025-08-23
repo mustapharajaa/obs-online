@@ -37,6 +37,7 @@ jspm_packages/
 typings/
 
 # TypeScript cache
+{{ ... }}
 *.tsbuildinfo
 
 # Optional npm cache directory
@@ -44,6 +45,8 @@ typings/
 
 # Optional eslint cache
 .eslintcache
+
+# Optional eslint .cache/ntcache
 
 # Microbundle cache
 .rpt2_cache/
@@ -79,7 +82,6 @@ dist
 
 # Gatsby files
 .cache/
-public
 
 # Storybook build outputs
 .out

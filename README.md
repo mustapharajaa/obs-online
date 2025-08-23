@@ -19,7 +19,7 @@ npm run setup
 npm start
 ```
 http://192.248.183.230:3005/lives
-http://192.248.183.230:3005/rtmp-control-panel.html
+http://192.248.183.230:3005
 
 # Add Firewall Group
 AWS/Azure/Google Cloud Security Groups: Firewall Group
@@ -97,7 +97,7 @@ node patched-rtmp-test.js
 ```
 recORDscreen/
 ├── patched-rtmp-test.js          # Main server with RTMP streaming logic
-├── patched-rtmp-viewer.html      # Stream control panel interface
+├── rtmp-control-panel.html       # Stream control panel interface
 ├── lives.html                    # Live streams monitoring dashboard
 ├── viewport-detection.js         # Browser viewport detection utilities
 ├── cookies-helper.js             # Cookie management for authenticated sessions

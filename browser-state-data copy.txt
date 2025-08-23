@@ -1,0 +1,792 @@
+{
+  "timestamp": "6:42:03 PM",
+  "viewport": {
+    "basic": {
+      "innerWidth": 1212,
+      "innerHeight": 701,
+      "outerWidth": 1228,
+      "outerHeight": 795,
+      "screenX": 251,
+      "screenY": 66,
+      "scrollX": 49,
+      "scrollY": 430,
+      "devicePixelRatio": 1
+    },
+    "visualViewport": {
+      "width": 1206,
+      "height": 695,
+      "offsetLeft": 0,
+      "offsetTop": 0,
+      "pageLeft": 49,
+      "pageTop": 430,
+      "scale": 1
+    },
+    "svelteAdvanced": {
+      "dpi": 1,
+      "divDPI": 1,
+      "isZoomed": false,
+      "isIOSZoom": false,
+      "zoomScale": 1,
+      "isPortrait": false,
+      "isLandscape": true,
+      "zoomAreaBox": {
+        "size": [
+          1206,
+          695
+        ],
+        "point": [
+          0,
+          0
+        ],
+        "offset": [
+          0,
+          6,
+          6,
+          0
+        ]
+      },
+      "viewAreaBox": {
+        "size": [
+          1212,
+          701
+        ],
+        "point": [
+          49,
+          430
+        ],
+        "offset": [
+          430,
+          45,
+          3660,
+          49
+        ]
+      },
+      "pagePosition": {
+        "documentWidth": 1300,
+        "documentHeight": 4785,
+        "scrollPosition": {
+          "x": 49,
+          "y": 430,
+          "maxX": 88,
+          "maxY": 4084
+        },
+        "viewportPosition": {
+          "left": 49,
+          "top": 430,
+          "right": 1261,
+          "bottom": 1131
+        },
+        "scrollRatio": {
+          "x": 0.5568181818181818,
+          "y": 0.10528893241919686
+        },
+        "readingPosition": {
+          "readingLine": 640.3,
+          "progress": 0.13381400208986416,
+          "estimatedTimeRemaining": 21,
+          "currentSection": {
+            "text": "Shan United vs Svay Rieng FC live score, prediction (2025/08/21)",
+            "level": 1,
+            "id": null
+          }
+        }
+      },
+      "elementPositions": [
+        {
+          "selector": "header",
+          "tagName": "header",
+          "id": null,
+          "className": "first-header",
+          "position": {
+            "viewport": {
+              "left": -49,
+              "top": -430,
+              "right": 1251,
+              "bottom": -370,
+              "width": 1300,
+              "height": 60
+            },
+            "document": {
+              "left": 0,
+              "top": 0,
+              "right": 1300,
+              "bottom": 60
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": "nav",
+          "tagName": "nav",
+          "id": null,
+          "className": "inner h-bar-100 flex justify-between border-box",
+          "position": {
+            "viewport": {
+              "left": 1,
+              "top": -430,
+              "right": 1201,
+              "bottom": -370,
+              "width": 1200,
+              "height": 60
+            },
+            "document": {
+              "left": 50,
+              "top": 0,
+              "right": 1250,
+              "bottom": 60
+            },
+            "css": {
+              "position": "relative",
+              "zIndex": "auto",
+              "display": "flex",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": "h1",
+          "tagName": "h1",
+          "id": null,
+          "className": "text",
+          "position": {
+            "viewport": {
+              "left": 353.734375,
+              "top": -322,
+              "right": 704.171875,
+              "bottom": -290,
+              "width": 350.4375,
+              "height": 32
+            },
+            "document": {
+              "left": 402.734375,
+              "top": 108,
+              "right": 753.171875,
+              "bottom": 140
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": ".header",
+          "tagName": "div",
+          "id": null,
+          "className": "header",
+          "position": {
+            "viewport": {
+              "left": -49,
+              "top": -430,
+              "right": 1251,
+              "bottom": -322,
+              "width": 1300,
+              "height": 108
+            },
+            "document": {
+              "left": 0,
+              "top": 0,
+              "right": 1300,
+              "bottom": 108
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": ".content",
+          "tagName": "div",
+          "id": null,
+          "className": "content border-box",
+          "position": {
+            "viewport": {
+              "left": 1,
+              "top": 2151,
+              "right": 1201,
+              "bottom": 3395,
+              "width": 1200,
+              "height": 1244
+            },
+            "document": {
+              "left": 50,
+              "top": 2581,
+              "right": 1250,
+              "bottom": 3825
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        }
+      ],
+      "scrollMetrics": {
+        "current": {
+          "x": 49,
+          "y": 430
+        },
+        "maximum": {
+          "x": 88,
+          "y": 4084
+        },
+        "percentage": {
+          "x": 55.68181818181818,
+          "y": 10.528893241919686
+        },
+        "direction": {
+          "x": 0,
+          "y": 0
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "behavior": {
+          "isAtTop": false,
+          "isAtBottom": false,
+          "isAtLeft": false,
+          "isAtRight": false,
+          "canScrollVertically": true,
+          "canScrollHorizontally": true
+        },
+        "sectionsInView": []
+      },
+      "intersectionData": {
+        "observedElements": [
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "pcLogo",
+              "src": "https://static.aiscore.com/_nuxt/img/logo.948162c.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -415,
+                "left": 1,
+                "bottom": -385,
+                "right": 110,
+                "width": 109,
+                "height": 30
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "appIcon",
+              "src": "https://static.aiscore.com/_nuxt/img/appIcon.66614fb.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -420,
+                "left": 680,
+                "bottom": -380,
+                "right": 758,
+                "width": 78,
+                "height": 40
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w60"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -229,
+                "left": 376.4375,
+                "bottom": -177,
+                "right": 428.4375,
+                "width": 52,
+                "height": 52
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w60"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -229,
+                "left": 773.578125,
+                "bottom": -177,
+                "right": 825.578125,
+                "width": 52,
+                "height": 52
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "oddType",
+              "src": "https://img1.aiscore.com/other/fe8aec51afeb2de633c9.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -95,
+                "left": 64.75,
+                "bottom": -70,
+                "right": 146.75,
+                "width": 82,
+                "height": 25
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "iframe",
+              "id": null,
+              "className": null,
+              "src": "https://widgets.thesports01.com/en/3d/football?profile=74rekh26eseunr0&id=4407353"
+            },
+            "intersection": {
+              "ratio": 1,
+              "isIntersecting": true,
+              "boundingClientRect": {
+                "top": 49,
+                "left": 1,
+                "bottom": 576.421875,
+                "right": 788,
+                "width": 787,
+                "height": 527.421875
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "ml-xs w-24 h-24 of-cta",
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 744.421875,
+                "left": 9,
+                "bottom": 768.421875,
+                "right": 33,
+                "width": 24,
+                "height": 24
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "w-24 h-24 of-cta mr-xs",
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 744.421875,
+                "left": 756,
+                "bottom": 768.421875,
+                "right": 780,
+                "width": 24,
+                "height": 24
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/praygoal.b0ac121.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/wamoney.cea1218.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/notalk.d092dd1.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/angry.8653b70.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/girl.c2de4f2.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/glasses.4a659be.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/555.36cc931.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/shydog.6446720.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/crydog.ceb4e8a.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/dog.11dec82.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/ballface.2693905.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://static.aiscore.com/_nuxt/img/slap.76c3b32.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          }
+        ],
+        "viewportIntersections": [],
+        "rootMarginEffects": [
+          {
+            "margin": "0px",
+            "estimatedEffect": "Elements would intersect 0px earlier"
+          },
+          {
+            "margin": "50px",
+            "estimatedEffect": "Elements would intersect 50px earlier"
+          },
+          {
+            "margin": "100px",
+            "estimatedEffect": "Elements would intersect 100px earlier"
+          },
+          {
+            "margin": "200px",
+            "estimatedEffect": "Elements would intersect 200px earlier"
+          }
+        ]
+      },
+      "preciseWidth": 1212,
+      "preciseHeight": 701,
+      "safeArea": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "threshold": [
+        61,
+        36
+      ]
+    }
+  },
+  "device": {
+    "isPC": true,
+    "isMobile": false,
+    "isTablet": false,
+    "isIOS": false,
+    "isAndroid": false,
+    "isBlink": true,
+    "isWebkit": false,
+    "isMacSafari": false,
+    "isLegacy": false,
+    "touchSupport": false,
+    "orientationSupport": true,
+    "geolocationSupport": true,
+    "gamepadSupport": true,
+    "platform": "Win32",
+    "language": "en-US",
+    "languages": [
+      "en-US",
+      "en"
+    ],
+    "cookieEnabled": true,
+    "onLine": true
+  },
+  "audio": {
+    "sampleRate": 48000,
+    "state": "running",
+    "baseLatency": 0.01,
+    "outputLatency": 0,
+    "destination": {
+      "channelCount": 2,
+      "channelCountMode": "explicit",
+      "channelInterpretation": "speakers"
+    }
+  },
+  "performance": {
+    "memory": {
+      "usedJSHeapSize": 55654794,
+      "totalJSHeapSize": 59601322,
+      "jsHeapSizeLimit": 4294705152
+    },
+    "timing": {
+      "navigationStart": 1755797952541,
+      "loadEventEnd": 1755797957100,
+      "domContentLoadedEventEnd": 1755797953806,
+      "responseEnd": 1755797953563
+    },
+    "connection": {
+      "effectiveType": "4g",
+      "downlink": 10,
+      "rtt": 150,
+      "saveData": false
+    }
+  },
+  "sensors": {
+    "geolocation": null,
+    "gyroscope": null,
+    "accelerometer": null
+  }
+}

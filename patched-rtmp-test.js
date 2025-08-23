@@ -23,6 +23,30 @@ try {
     };
 }
 
+// Helper function to convert duration string to seconds
+function convertDurationToSeconds(duration) {
+    if (!duration || typeof duration !== 'string') return 0;
+    
+    // Parse duration format "HH:MM:SS.MS" or "MM:SS"
+    const parts = duration.split(':');
+    let seconds = 0;
+    
+    if (parts.length === 3) {
+        // HH:MM:SS.MS format
+        const hours = parseInt(parts[0]) || 0;
+        const minutes = parseInt(parts[1]) || 0;
+        const secs = parseFloat(parts[2]) || 0;
+        seconds = hours * 3600 + minutes * 60 + secs;
+    } else if (parts.length === 2) {
+        // MM:SS format
+        const minutes = parseInt(parts[0]) || 0;
+        const secs = parseFloat(parts[1]) || 0;
+        seconds = minutes * 60 + secs;
+    }
+    
+    return seconds;
+}
+
 // Auto-generate required files for cross-device deployment
 function ensureRequiredFiles() {
     console.log('🔧 Checking and creating required files for cross-device deployment...');
@@ -110,7 +134,18 @@ const io = new Server(server, {
 });
 
 app.use(express.static('.'));
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        activeStreams: activeStreams.size 
+    });
+});
 
 // Multiple concurrent streams management
 const activeStreams = new Map(); // streamId -> { browser, page, recorder, interval }
@@ -121,9 +156,20 @@ io.on('connection', (socket) => {
     console.log('🔌 Client connected');
 
     socket.on('startPatchedRTMPStream', async (data) => {
-        const { url, rtmpUrl, streamKey, bitrate = 2500, fps = 15, resolution = '1280x720', scrollX = 0, scrollY = 0, zoomLevel = 100, viewportWidth = 1280, viewportHeight = 720 } = data;
+        const { url, rtmpUrl, streamKey, bitrate = 2500, fps = 15, resolution = '1280x720', scrollX = 0, scrollY = 0, zoomLevel = 100, viewportWidth = 1280, viewportHeight = 720, maxDuration = null } = data;
         
-        console.log(`📥 Received startPatchedRTMPStream request:`, { url, rtmpUrl, streamKey, bitrate, fps, resolution, scrollX, scrollY, zoomLevel, viewportWidth, viewportHeight });
+        console.log(`📥 Received startPatchedRTMPStream request:`, { url, rtmpUrl, streamKey, bitrate, fps, resolution, scrollX, scrollY, zoomLevel, viewportWidth, viewportHeight, maxDuration });
+        
+        // Convert maxDuration - handle both string and number formats
+        let maxDurationSeconds = null;
+        if (maxDuration) {
+            if (typeof maxDuration === 'string') {
+                maxDurationSeconds = convertDurationToSeconds(maxDuration);
+            } else if (typeof maxDuration === 'number') {
+                maxDurationSeconds = maxDuration; // Already in seconds
+            }
+        }
+        console.log(`⏰ Duration limit: ${maxDuration} → ${maxDurationSeconds} seconds`);
         
         // Create unique stream ID
         const streamId = ++streamCounter;
@@ -441,6 +487,37 @@ io.on('connection', (socket) => {
                                             stream.ffmpegDuration = duration;
                                             stream.lastFFMPEGUpdate = Date.now();
                                             
+                                            // Check if stream should auto-stop based on duration limit
+                                            if (stream.maxDuration && duration && !stream.autoStopping) {
+                                                const currentSeconds = convertDurationToSeconds(duration);
+                                                const maxSeconds = stream.maxDuration; // maxDuration is already in seconds
+                                                
+                                                if (currentSeconds >= maxSeconds) {
+                                                    console.log(`⏰ [Stream ${streamId}] Duration limit reached (${duration}/${stream.maxDuration}) - auto-stopping...`);
+                                                    
+                                                    // Mark as auto-stopping to prevent multiple triggers
+                                                    stream.autoStopping = true;
+                                                    
+                                                    // Auto-stop the stream
+                                                    setTimeout(async () => {
+                                                        try {
+                                                            if (activeStreams.has(streamId)) {
+                                                                await stopStreamById(streamId);
+                                                                io.emit('streamAutoStopped', {
+                                                                    streamId: streamId,
+                                                                    reason: 'Duration limit reached',
+                                                                    duration: duration,
+                                                                    maxDuration: stream.maxDuration
+                                                                });
+                                                            }
+                                                        } catch (error) {
+                                                            console.log(`❌ [Stream ${streamId}] Auto-stop error:`, error.message);
+                                                        }
+                                                    }, 1000);
+                                                    return; // Don't send duration update if stopping
+                                                }
+                                            }
+                                            
                                             // Send to /lives page
                                             io.emit('durationUpdate', {
                                                 streamId: streamId,
@@ -587,6 +664,7 @@ io.on('connection', (socket) => {
                 resolution,
                 startTime: Date.now(),
                 ffmpegDuration: '00:00:00',
+                maxDuration: maxDurationSeconds,
                 lastFFMPEGUpdate: Date.now(),
                 socketId: socket.id
             });
@@ -610,106 +688,106 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Extract stop stream logic into reusable function
+    async function stopStreamById(streamId) {
+        if (!streamId || !activeStreams.has(streamId)) {
+            throw new Error(`Stream ${streamId} not found`);
+        }
+        
+        const stream = activeStreams.get(streamId);
+        console.log(`🛑 [Stream ${streamId}] Stopping PATCHED recorder...`);
+        
+        if (stream.interval) {
+            clearInterval(stream.interval);
+        }
+        
+        // Close file watcher
+        if (stream.fileWatcher) {
+            stream.fileWatcher.close();
+            console.log(`✅ [Stream ${streamId}] File watcher closed`);
+        }
+                
+        if (stream.recorder) {
+            // FORCE KILL FFMPEG PROCESS DIRECTLY (using Stream ID)
+            console.log(`🔪 [Stream ${streamId}] FORCE KILLING FFMPEG process...`);
+            
+            try {
+                if (stream.ffmpegPid) {
+                    const { exec } = require('child_process');
+                    exec(`taskkill /F /PID ${stream.ffmpegPid}`, (error, stdout, stderr) => {
+                        if (error) {
+                            console.log(`⚠️ [Stream ${streamId}] FFMPEG kill error: ${error.message}`);
+                        } else {
+                            console.log(`✅ [Stream ${streamId}] FFMPEG process killed (PID: ${stream.ffmpegPid})`);
+                        }
+                    });
+                } else {
+                    console.log(`🔍 [Stream ${streamId}] No direct PID access, searching for specific FFMPEG process...`);
+                    
+                    try {
+                        // Try using WMI to find specific process
+                        const streamRtmpUrl = stream.rtmpEndpoint;
+                        const { exec } = require('child_process');
+                        const { promisify } = require('util');
+                        const execAsync = promisify(exec);
+                        
+                        const wmiResult = await execAsync(`powershell "Get-WmiObject Win32_Process -Filter \\"name='ffmpeg.exe'\\" | Where-Object {$_.CommandLine -like '*${streamRtmpUrl}*'} | Select-Object ProcessId"`);
+                        
+                        if (wmiResult.stdout.includes('ProcessId')) {
+                            const pidMatch = wmiResult.stdout.match(/(\d+)/);
+                            if (pidMatch) {
+                                const targetPid = pidMatch[1];
+                                console.log(`🎯 [Stream ${streamId}] Found specific FFMPEG PID via WMI: ${targetPid}`);
+                                
+                                await execAsync(`taskkill /F /PID ${targetPid}`);
+                                console.log(`✅ [Stream ${streamId}] Successfully killed specific FFMPEG process (PID: ${targetPid})`);
+                            }
+                        } else {
+                            console.log(`⚠️ [Stream ${streamId}] Cannot identify specific process - skipping kill to protect other streams`);
+                            console.log(`🛡️ [Stream ${streamId}] Manual cleanup may be required for orphaned FFMPEG processes`);
+                        }
+                    } catch (error) {
+                        console.log(`⚠️ [Stream ${streamId}] Could not list FFMPEG processes: ${error.message}`);
+                        console.log(`⚠️ [Stream ${streamId}] Cannot identify specific process - skipping kill to protect other streams`);
+                        console.log(`🛡️ [Stream ${streamId}] Manual cleanup may be required for orphaned FFMPEG processes`);
+                    }
+                }
+            } catch (error) {
+                console.log(`⚠️ [Stream ${streamId}] FFMPEG kill error:`, error.message);
+            }
+            
+            await stream.recorder.stop();
+            console.log(`✅ [Stream ${streamId}] PATCHED recorder stopped`);
+        }
+
+        if (stream.browser) {
+            await stream.browser.close();
+            console.log(`✅ [Stream ${streamId}] Browser closed`);
+        }
+
+        activeStreams.delete(streamId);
+        console.log(`🛑 [Stream ${streamId}] PATCHED streaming stopped`);
+        console.log(`📊 Active streams: ${activeStreams.size}`);
+        
+        // Clean up state file
+        try {
+            const fs = require('fs');
+            const stateFilePath = `rtmp-stream-${streamId}-state.txt`;
+            if (fs.existsSync(stateFilePath)) {
+                fs.unlinkSync(stateFilePath);
+                console.log(`🗑️ [Stream ${streamId}] State file deleted: ${stateFilePath}`);
+            }
+        } catch (error) {
+            console.log(`⚠️ [Stream ${streamId}] Could not delete state file: ${error.message}`);
+        }
+    }
+
     socket.on('stopStream', async (data) => {
         const { streamId } = data || {};
         
         try {
             if (streamId && activeStreams.has(streamId)) {
-                // Stop specific stream
-                const stream = activeStreams.get(streamId);
-                console.log(`🛑 [Stream ${streamId}] Stopping PATCHED recorder...`);
-                
-                if (stream.interval) {
-                    clearInterval(stream.interval);
-                }
-                
-                // Close file watcher
-                if (stream.fileWatcher) {
-                    stream.fileWatcher.close();
-                    console.log(`✅ [Stream ${streamId}] File watcher closed`);
-                }
-                
-                if (stream.recorder) {
-                    // FORCE KILL FFMPEG PROCESS DIRECTLY (using Stream ID)
-                    console.log(`🔪 [Stream ${streamId}] FORCE KILLING FFMPEG process...`);
-                    
-                    try {
-                        // Access the FFMPEG process from the patched library
-                        if (stream.recorder.ffmpegProcess && stream.recorder.ffmpegProcess.pid) {
-                            const ffmpegPid = stream.recorder.ffmpegProcess.pid;
-                            console.log(`🎯 [Stream ${streamId}] Killing FFMPEG PID: ${ffmpegPid}`);
-                            
-                            const { exec } = require('child_process');
-                            exec(`taskkill /F /PID ${ffmpegPid}`, (error, stdout, stderr) => {
-                                if (error) {
-                                    console.log(`⚠️ [Stream ${streamId}] FFMPEG kill error: ${error.message}`);
-                                } else {
-                                    console.log(`✅ [Stream ${streamId}] FFMPEG process killed (PID: ${ffmpegPid})`);
-                                }
-                            });
-                        } else {
-                            console.log(`🔍 [Stream ${streamId}] No direct PID access, searching for specific FFMPEG process...`);
-                            
-                            // Find and kill the specific FFMPEG process for this stream
-                            const { exec } = require('child_process');
-                            
-                            // Get all FFMPEG processes with their command lines
-                            exec('wmic process where "name=\'ffmpeg.exe\'" get ProcessId,CommandLine', (error, stdout, stderr) => {
-                                if (error) {
-                                    console.log(`⚠️ [Stream ${streamId}] Could not list FFMPEG processes: ${error.message}`);
-                                    return;
-                                }
-                                
-                                const lines = stdout.split('\n').filter(line => line.trim() && line.includes('ffmpeg.exe'));
-                                console.log(`🔍 [Stream ${streamId}] Found ${lines.length} FFMPEG processes`);
-                                
-                                // Look for FFMPEG process that matches this stream's RTMP URL
-                                const streamRtmpUrl = stream.rtmpEndpoint;
-                                let targetPid = null;
-                                
-                                for (const line of lines) {
-                                    if (line.includes(streamRtmpUrl)) {
-                                        // Extract PID from WMIC output (format: CommandLine ProcessId)
-                                        // The PID is typically at the end of the line after spaces
-                                        const pidMatch = line.match(/\s+(\d+)\s*$/);
-                                        if (pidMatch) {
-                                            targetPid = pidMatch[1];
-                                            console.log(`🎯 [Stream ${streamId}] Found target FFMPEG PID: ${targetPid} (RTMP: ${streamRtmpUrl})`);
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                if (targetPid) {
-                                    // Kill the specific FFMPEG process
-                                    exec(`taskkill /F /PID ${targetPid}`, (killError, killStdout, killStderr) => {
-                                        if (killError) {
-                                            console.log(`⚠️ [Stream ${streamId}] Failed to kill FFMPEG PID ${targetPid}: ${killError.message}`);
-                                        } else {
-                                            console.log(`✅ [Stream ${streamId}] Successfully killed specific FFMPEG process (PID: ${targetPid})`);
-                                        }
-                                    });
-                                } else {
-                                    console.log(`⚠️ [Stream ${streamId}] Could not find specific FFMPEG process for RTMP: ${streamRtmpUrl}`);
-                                }
-                            });
-                        }
-                    } catch (error) {
-                        console.log(`⚠️ [Stream ${streamId}] FFMPEG kill error:`, error.message);
-                    }
-                    
-                    await stream.recorder.stop();
-                    console.log(`✅ [Stream ${streamId}] PATCHED recorder stopped`);
-                }
-
-                if (stream.browser) {
-                    await stream.browser.close();
-                    console.log(`✅ [Stream ${streamId}] Browser closed`);
-                }
-
-                activeStreams.delete(streamId);
-                console.log(`🛑 [Stream ${streamId}] PATCHED streaming stopped`);
-                console.log(`📊 Active streams: ${activeStreams.size}`);
+                await stopStreamById(streamId);
                 socket.emit('streamStopped', { streamId });
                 
             } else if (!streamId) {
@@ -747,12 +825,24 @@ io.on('connection', (socket) => {
 
                     activeStreams.delete(id);
                     console.log(`🛑 [Stream ${id}] PATCHED streaming stopped`);
+                    
+                    // Clean up state file
+                    try {
+                        const fs = require('fs');
+                        const stateFilePath = `rtmp-stream-${id}-state.txt`;
+                        if (fs.existsSync(stateFilePath)) {
+                            fs.unlinkSync(stateFilePath);
+                            console.log(`🗑️ [Stream ${id}] State file deleted: ${stateFilePath}`);
+                        }
+                    } catch (error) {
+                        console.log(`⚠️ [Stream ${id}] Could not delete state file: ${error.message}`);
+                    }
                 }
                 
                 console.log(`📊 Active streams: ${activeStreams.size}`);
                 socket.emit('streamStopped', { stoppedStreams: streamsToStop });
             } else {
-                socket.emit('streamError', `Stream ${streamId} not found`);
+                socket.emit('streamStopped', { streamId, message: `Stream ${streamId} was already stopped or not found` });
             }
 
         } catch (error) {
@@ -824,12 +914,12 @@ io.on('connection', (socket) => {
 
 // Serve main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'patched-rtmp-viewer.html'));
+    res.sendFile(path.join(__dirname, 'public', 'rtmp-control-panel.html'));
 });
 
 // Serve lives management page
 app.get('/lives', (req, res) => {
-    res.sendFile(path.join(__dirname, 'lives.html'));
+    res.sendFile(path.join(__dirname, 'public', 'lives.html'));
 });
 
 // API endpoints for file management
