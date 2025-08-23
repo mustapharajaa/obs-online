@@ -1,9 +1,9 @@
 # Manual OpenSSL installation for Windows
 Write-Host "Downloading and installing OpenSSL manually..." -ForegroundColor Green
 
-# Download OpenSSL installer
-$url = "https://slproweb.com/download/Win64OpenSSL-3_0_13.exe"
-$installer = "$env:TEMP\Win64OpenSSL-3_0_13.exe"
+# Download OpenSSL installer (current available version)
+$url = "https://slproweb.com/download/Win64OpenSSL-3_4_1.exe"
+$installer = "$env:TEMP\Win64OpenSSL-3_4_1.exe"
 
 Write-Host "Downloading OpenSSL installer..." -ForegroundColor Yellow
 try {
