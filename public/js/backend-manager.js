@@ -1,19 +1,19 @@
-// Connect to RDP backend server
+// Connect to backend server
 document.addEventListener('DOMContentLoaded', () => {
-    // Get active backend from admin settings or default to RDP
-    const activeBackend = localStorage.getItem('selectedBackend') || 'rdp';
+    // Get active backend from admin settings or default to current origin
+    const activeBackend = localStorage.getItem('selectedBackend') || 'local';
     const backendConfigs = JSON.parse(localStorage.getItem('backendConfigs') || '{}');
     
     console.log('🔧 Debug - Active Backend:', activeBackend);
     console.log('🔧 Debug - Backend Configs:', backendConfigs);
     
-    let backendUrl = 'http://YOUR_RDP_IP_HERE:3005'; // Default fallback
+    let backendUrl = window.location.origin; // Default to current origin (works with Vercel)
     
     if (backendConfigs[activeBackend]) {
         backendUrl = backendConfigs[activeBackend].url;
         console.log('🔧 Debug - Using configured URL:', backendUrl);
     } else {
-        console.log('🔧 Debug - No config found, using fallback URL');
+        console.log('🔧 Debug - No config found, using current origin:', backendUrl);
     }
     
     if (typeof io !== 'undefined') {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         window.socket.on('disconnect', () => {
-            console.log('❌ Disconnected from RDP backend');
+            console.log('❌ Disconnected from backend');
             if (window.showNotification) {
                 window.showNotification('❌ Backend connection lost', 'error');
             }
