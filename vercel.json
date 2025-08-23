@@ -14,10 +14,5 @@
       "source": "/(.*)",
       "destination": "/public/$1"
     }
-  ],
-  "env": {
-    "BACKEND_URL": "@backend_url",
-    "REDIS_URL": "@redis_url",
-    "NODE_ENV": "production"
-  }
+  ]
 }
