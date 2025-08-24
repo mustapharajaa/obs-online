@@ -13,21 +13,30 @@ export default async function handler(req, res) {
     const RDP_PRIMARY_URL = 'http://45.76.80.59:3005'; // Primary (HTTP)
     const RDP_FALLBACK_URL = 'https://45.76.80.59:3006'; // Fallback (HTTPS)
 
-    // The fetch logic needs to bypass Node.js's default rejection of self-signed certs for the HTTPS endpoint.
     const https = require('https');
-    const agent = new https.Agent({
-        rejectUnauthorized: false,
-    });
+    const agent = new https.Agent({ rejectUnauthorized: false });
 
     async function tryFetch(url) {
         const healthUrl = `${url}/api/health`;
-        console.log(`Proxy attempting to connect to: ${healthUrl}`);
-        const options = url.startsWith('https') ? { agent } : {};
-        const response = await fetch(healthUrl, options);
-        if (!response.ok) {
-            throw new Error(`Backend at ${url} responded with status ${response.status}`);
+        console.log(`[PROXY] Attempting to connect to: ${healthUrl}`);
+        const options = {
+            ...(url.startsWith('https') && { agent }),
+            // Set a timeout to avoid long waits for a non-responsive server
+            signal: AbortSignal.timeout(10000) // 10 seconds
+        };
+        
+        try {
+            const response = await fetch(healthUrl, options);
+            if (!response.ok) {
+                throw new Error(`Non-2xx status: ${response.status}`);
+            }
+            console.log(`[PROXY] Successfully connected to ${healthUrl}`);
+            return response;
+        } catch (e) {
+            // Log detailed error information
+            console.error(`[PROXY] Failed to connect to ${healthUrl}. Error: ${e.name}, Message: ${e.message}`);
+            throw e; // Re-throw to be caught by the fallback logic
         }
-        return response;
     }
 
     try {
@@ -36,17 +45,21 @@ export default async function handler(req, res) {
         try {
             response = await tryFetch(RDP_PRIMARY_URL);
             connectedUrl = RDP_PRIMARY_URL;
-            console.log(`✅ Proxy connected successfully to primary URL: ${connectedUrl}`);
         } catch (primaryError) {
-            console.warn(`⚠️ Primary URL failed: ${primaryError.message}. Trying fallback...`);
+            console.warn('[PROXY] Primary URL failed. Trying fallback...');
             try {
                 response = await tryFetch(RDP_FALLBACK_URL);
                 connectedUrl = RDP_FALLBACK_URL;
-                console.log(`✅ Proxy connected successfully to fallback URL: ${connectedUrl}`);
             } catch (fallbackError) {
-                console.error(`❌ Fallback URL also failed: ${fallbackError.message}`);
-                // Throw the original primary error to be caught by the outer try-catch
-                throw primaryError; 
+                console.error('[PROXY] Fallback URL also failed.');
+                // Return a detailed error response
+                return res.status(502).json({
+                    error: 'Bad Gateway',
+                    message: 'The proxy server could not connect to the RDP backend.',
+                    primary_error: { name: primaryError.name, message: primaryError.message },
+                    fallback_error: { name: fallbackError.name, message: fallbackError.message },
+                    tried_urls: [RDP_PRIMARY_URL, RDP_FALLBACK_URL]
+                });
             }
         }
 
@@ -59,11 +72,8 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error('RDP Proxy Error:', error.message);
-        return res.status(500).json({
-            error: 'RDP Backend connection failed',
-            message: error.message,
-            tried_urls: [RDP_PRIMARY_URL, RDP_FALLBACK_URL]
-        });
+        // This outer catch is for unexpected errors in the handler itself
+        console.error('[PROXY] Unhandled error in proxy handler:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
