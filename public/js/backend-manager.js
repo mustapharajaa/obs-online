@@ -25,24 +25,35 @@ document.addEventListener('DOMContentLoaded', () => {
             forceNew: true
         };
         
-        // Special handling for RDP backend
+        // Special handling for RDP backend - it's HTTP only, not Socket.IO
         if (activeBackend === 'rdp') {
-            console.log('🔧 Debug - Attempting RDP backend connection...');
+            console.log('🔧 Debug - RDP backend detected - using HTTP mode...');
             
-            // First try to test if the server responds to HTTP requests
-            fetch(backendUrl + '/health')
+            // Test HTTP connection to RDP backend
+            fetch(backendUrl)
                 .then(response => {
-                    console.log('🔧 Debug - RDP backend health check:', response.status);
+                    console.log('🔧 Debug - RDP backend HTTP test:', response.status);
                     if (response.ok) {
-                        connectWithSocketIO();
+                        console.log('✅ RDP Backend connected via HTTP');
+                        if (window.showNotification) {
+                            window.showNotification('✅ RDP Backend connected (HTTP mode)', 'success');
+                        }
+                        
+                        // Set up HTTP-only mode for RDP backend
+                        window.rdpBackendMode = 'http-only';
+                        window.rdpBackendUrl = backendUrl;
+                        
+                        // No Socket.IO connection needed for RDP backend
+                        return;
                     } else {
-                        handleRDPConnectionFailure('RDP backend server not responding');
+                        throw new Error('RDP backend server not responding');
                     }
                 })
                 .catch(error => {
-                    console.log('🔧 Debug - RDP backend health check failed:', error);
-                    // Try Socket.IO connection anyway
-                    connectWithSocketIO();
+                    console.log('❌ RDP backend connection failed:', error);
+                    if (window.showNotification) {
+                        window.showNotification('❌ Cannot connect to RDP Backend', 'error');
+                    }
                 });
         } else {
             connectWithSocketIO();
