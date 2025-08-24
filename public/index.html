@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RTMP Streaming Control Panel</title>
-    <script src="/socket.io/socket.io.js"></script>
     <script src="js/backend-manager.js"></script>
     <style>
         * {
@@ -886,16 +885,10 @@
         or <a href="#">load Disqus comments</a> right here (click to activate).</p>
     </div>
 
-    <script defer>
-        let currentEditingFile = ''; // Variable to track which file is being edited
-
-        // Initialize backend manager
-        const backendManager = new BackendManager();
-
-        const socket = io(backendManager.getBackendUrl(), {
-            reconnectionAttempts: 5,
-            timeout: 10000,
-        });
+    <script>
+        document.addEventListener('socketInitialized', () => {
+            const socket = window.socket; // Use the globally initialized socket
+            let currentEditingFile = ''; // Variable to track which file is being edited
         let isStreaming = false;
 
         // Platform selection
@@ -1303,6 +1296,7 @@
 
         // Run on page load
         checkVideoVisibility();
+        });
     </script>
 </body>
 </html>

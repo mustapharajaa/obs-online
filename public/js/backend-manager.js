@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     script.onload = () => {
         console.log(`Socket.IO script loaded from ${backendUrl}`);
         initializeSocket(backendUrl);
+        // Dispatch a custom event to notify that the socket is ready
+        document.dispatchEvent(new Event('socketInitialized'));
     };
     
     script.onerror = () => {
