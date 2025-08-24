@@ -14,16 +14,22 @@ export default async function handler(req, res) {
     const RDP_BACKEND_URL = 'http://45.76.80.59:3005';
     
     try {
-        // Health check endpoint
+        // Health check endpoint - check root path as it returns 200 OK
         if (req.url === '/api/rdp-proxy' || req.url === '/api/rdp-proxy/') {
-            const response = await fetch(`${RDP_BACKEND_URL}/api/health`);
-            const data = await response.json();
+            const response = await fetch(RDP_BACKEND_URL);
             
-            return res.status(200).json({
-                ...data,
-                proxy: 'vercel',
-                rdp_backend: RDP_BACKEND_URL
-            });
+            if (response.ok) {
+                // If backend is reachable, return a success status
+                return res.status(200).json({
+                    status: 'ok',
+                    message: 'RDP backend is reachable via proxy.',
+                    proxy: 'vercel',
+                    rdp_backend: RDP_BACKEND_URL
+                });
+            } else {
+                // If backend returns an error status, forward it
+                throw new Error(`RDP backend returned status ${response.status}`);
+            }
         }
         
         // Proxy other requests
