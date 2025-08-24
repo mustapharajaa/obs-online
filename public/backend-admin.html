@@ -373,6 +373,8 @@
                     
                     if (response.ok) {
                         this.showNotification(`✅ ${backend.name} is online`, 'success');
+                        // Set this backend as active and re-render to show the change
+                        this.setActive(key);
                     } else {
                         this.showNotification(`❌ ${backend.name} responded with error: ${response.status}`, 'error');
                     }
