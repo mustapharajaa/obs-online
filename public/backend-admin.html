@@ -235,11 +235,6 @@
         <div class="header">
             <h1>🔧 Backend Configuration Admin</h1>
             <p>Manage your backend servers and configurations</p>
-            <div style="margin-top: 15px;">
-                <a href="accept-certificate.html" style="background: #dc3545; color: white; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-size: 14px;">
-                    🔐 Accept RDP Certificate First
-                </a>
-            </div>
         </div>
 
         <div class="backend-grid" id="backendGrid">
@@ -264,8 +259,8 @@
                 const defaultBackends = {
                     rdp: {
                         name: 'RDP Backend',
-                        url: 'https://45.76.80.59:3006',
-                        websocket: 'wss://45.76.80.59:3006',
+                        url: 'http://YOUR_RDP_IP_HERE:3005',
+                        websocket: 'ws://YOUR_RDP_IP_HERE:3005',
                         type: 'rdp',
                         description: 'Remote Desktop Protocol server',
                         active: true

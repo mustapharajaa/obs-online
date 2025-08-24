@@ -1,7 +1,6 @@
 # Backend files - should not be deployed to Vercel
 *.js
 !public/**/*.js
-!api/**/*.js
 
 # Node.js dependencies
 node_modules/
