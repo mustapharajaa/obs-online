@@ -252,23 +252,23 @@
             constructor() {
                 this.backends = this.loadBackends();
                 this.currentActive = localStorage.getItem('selectedBackend') || 'local';
-                this.initializeLocalConfig().then(() => this.render());
+                this.render();
             }
 
             loadBackends() {
                 const defaultBackends = {
                     rdp: {
                         name: 'RDP Backend',
-                        url: 'https://YOUR_RDP_IP_HERE:3005',
-                        websocket: 'wss://YOUR_RDP_IP_HERE:3005',
+                        url: 'http://YOUR_RDP_IP_HERE:3005',
+                        websocket: 'ws://YOUR_RDP_IP_HERE:3005',
                         type: 'rdp',
                         description: 'Remote Desktop Protocol server',
                         active: true
                     },
                     local: {
                         name: 'Local Development',
-                        url: 'https://localhost:3005',
-                        websocket: 'wss://localhost:3005',
+                        url: 'http://localhost:3005',
+                        websocket: 'ws://localhost:3005',
                         type: 'local',
                         description: 'Local development server',
                         active: false
@@ -293,25 +293,6 @@
 
                 const saved = localStorage.getItem('backendConfigs');
                 return saved ? JSON.parse(saved) : defaultBackends;
-            }
-
-            async initializeLocalConfig() {
-                try {
-                    const response = await fetch('/api/config');
-                    if (!response.ok) throw new Error('Config endpoint failed');
-
-                    const config = await response.json();
-                    const backendUrl = config.backendUrl;
-
-                    if (backendUrl) {
-                        console.log(`🔧 Auto-configured local backend URL to: ${backendUrl}`);
-                        this.backends.local.url = backendUrl;
-                        this.backends.local.websocket = backendUrl.replace('https://', 'wss://');
-                        this.saveBackends();
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Could not auto-configure local backend from /api/config. Using defaults.', error);
-                }
             }
 
             saveBackends() {
