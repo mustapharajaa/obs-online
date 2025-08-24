@@ -988,6 +988,7 @@ app.get('/lives', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'lives.html'));
 });
 
+
 // API endpoints for file management
 app.get('/api/files/:filename', (req, res) => {
     const filename = req.params.filename;
