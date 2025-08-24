@@ -252,7 +252,7 @@
             constructor() {
                 this.backends = this.loadBackends();
                 this.currentActive = localStorage.getItem('selectedBackend') || 'local';
-                this.render();
+                this.initializeLocalConfig().then(() => this.render());
             }
 
             loadBackends() {
@@ -293,6 +293,25 @@
 
                 const saved = localStorage.getItem('backendConfigs');
                 return saved ? JSON.parse(saved) : defaultBackends;
+            }
+
+            async initializeLocalConfig() {
+                try {
+                    const response = await fetch('/api/config');
+                    if (!response.ok) throw new Error('Config endpoint failed');
+
+                    const config = await response.json();
+                    const backendUrl = config.backendUrl;
+
+                    if (backendUrl) {
+                        console.log(`🔧 Auto-configured local backend URL to: ${backendUrl}`);
+                        this.backends.local.url = backendUrl;
+                        this.backends.local.websocket = backendUrl.replace('https://', 'wss://');
+                        this.saveBackends();
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Could not auto-configure local backend from /api/config. Using defaults.', error);
+                }
             }
 
             saveBackends() {

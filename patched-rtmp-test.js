@@ -2,6 +2,7 @@ require('dotenv').config();
 
 // TEST THE PATCHED PUPPETEER-SCREEN-RECORDER WITH DIRECT RTMP OUTPUT
 const express = require('express');
+const http = require('http');
 const https = require('https');
 const { Server } = require('socket.io');
 const puppeteer = require('puppeteer');
@@ -132,13 +133,14 @@ console.log('✅ PRIMARY_DOMAIN:', process.env.PRIMARY_DOMAIN);
 
 
 const app = express();
-// Setup HTTPS with self-signed certificates
-const options = {
-    key: fs.readFileSync(path.join(__dirname, 'certificates/server.key')),
-    cert: fs.readFileSync(path.join(__dirname, 'certificates/server.crt'))
-};
+// --- HTTPS Server Setup ---
+// Read SSL certificate files
+const privateKey = fs.readFileSync(path.join(__dirname, 'certificates', 'server.key'), 'utf8');
+const certificate = fs.readFileSync(path.join(__dirname, 'certificates', 'server.crt'), 'utf8');
+const credentials = { key: privateKey, cert: certificate };
 
-const server = https.createServer(options, app);
+// Create HTTPS server
+const server = https.createServer(credentials, app);
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -150,6 +152,13 @@ app.use(express.static('.'));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// API endpoint to provide backend configuration
+app.get('/api/config', (req, res) => {
+    res.json({
+        backendUrl: `https://${process.env.PRIMARY_DOMAIN}:${process.env.SERVER_PORT}`
+    });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -291,6 +300,49 @@ io.on('connection', (socket) => {
                     console.log('📏 HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
                     console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
                     console.log('🎯 Match:', (document.documentElement.clientWidth === window.innerWidth && document.documentElement.clientHeight === window.innerHeight) ? 'PERFECT' : 'STILL DIFFERENT');
+                });
+
+                // Run comprehensive page parameter detection (same as puppeteer-exact-viewport.js)
+                console.log(`🔍 [Stream ${streamId}] Running comprehensive page parameter detection...`);
+                await page.evaluate(() => {
+                    console.log('🔍 COMPREHENSIVE PAGE PARAMETER DETECTION:');
+                    console.log('='.repeat(60));
+                    console.log('📱 VIEWPORT & WINDOW:');
+                    console.log('   Viewport (inner):', window.innerWidth + 'x' + window.innerHeight);
+                    console.log('   Window (outer):', window.outerWidth + 'x' + window.outerHeight);
+                    console.log('   Position X,Y:', window.screenX + ',' + window.screenY);
+                    console.log('📜 SCROLL PARAMETERS:');
+                    console.log('   Current Scroll X,Y:', window.scrollX + ',' + window.scrollY);
+                    console.log('   Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
+                    console.log('   Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
+                    console.log('🔍 ZOOM & SCALING:');
+                    console.log('   Device Pixel Ratio:', window.devicePixelRatio);
+                    console.log('   Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
+                    console.log('   Body Zoom Style:', document.body.style.zoom || 'none');
+                    console.log('   Body Transform:', document.body.style.transform || 'none');
+                    console.log('   Computed Body Zoom:', window.getComputedStyle(document.body).zoom || 'auto');
+                    console.log('   HTML Zoom:', document.documentElement.style.zoom || 'none');
+                    console.log('📐 ELEMENT SIZES:');
+                    console.log('   Body Client:', document.body.clientWidth + 'x' + document.body.clientHeight);
+                    console.log('   Body Offset:', document.body.offsetWidth + 'x' + document.body.offsetHeight);
+                    console.log('   Body Scroll:', document.body.scrollWidth + 'x' + document.body.scrollHeight);
+                    console.log('   HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
+                    console.log('🎯 CSS PROPERTIES:');
+                    const bodyStyle = window.getComputedStyle(document.body);
+                    console.log('   Font Size:', bodyStyle.fontSize);
+                    console.log('   Line Height:', bodyStyle.lineHeight);
+                    console.log('   Transform:', bodyStyle.transform);
+                    console.log('   Scale:', bodyStyle.scale || 'none');
+                    console.log('📊 SCREEN INFO:');
+                    console.log('   Screen Resolution:', screen.width + 'x' + screen.height);
+                    console.log('   Available Screen:', screen.availWidth + 'x' + screen.availHeight);
+                    console.log('   Color Depth:', screen.colorDepth + ' bits');
+                    console.log('   Pixel Depth:', screen.pixelDepth + ' bits');
+                    console.log('🌐 BROWSER INFO:');
+                    console.log('   User Agent:', navigator.userAgent.substring(0, 100) + '...');
+                    console.log('   Platform:', navigator.platform);
+                    console.log('   Language:', navigator.language);
+                    console.log('='.repeat(60));
                 });
 
                 // Set exact scroll position (same as puppeteer-exact-viewport.js)
@@ -998,11 +1050,10 @@ app.post('/api/files/:filename', (req, res) => {
     }
 });
 
-const PORT = process.env.SERVER_PORT || 3006; // Default to 3006 for HTTPS
+const PORT = 3005;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n✅ Server is running on https://localhost:${PORT}`);
-    console.log(`🚀 PATCHED RTMP Streaming Server running on https://localhost:${PORT}`);
-    console.log(`🌐 Server accessible from internet at: https://YOUR_SERVER_IP:${PORT}`);
+    console.log(`🚀 PATCHED RTMP Streaming Server running on http://0.0.0.0:${PORT}`);
+    console.log(`🌐 Server accessible from internet at: http://YOUR_SERVER_IP:${PORT}`);
     console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
     console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
     console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);
