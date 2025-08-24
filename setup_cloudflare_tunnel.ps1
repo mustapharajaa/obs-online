@@ -10,15 +10,55 @@ $LocalServiceUrl = "http://localhost:3005"
 # --- Script Body ---
 Write-Host "--- Cloudflare Tunnel Setup ---" -ForegroundColor Yellow
 
-# Step 1: Check for cloudflared
+# Step 1: Check for and install cloudflared if missing
 Write-Host "Step 1: Checking for cloudflared..."
 $cloudflaredPath = Get-Command cloudflared -ErrorAction SilentlyContinue
 if (-not $cloudflaredPath) {
-    Write-Host "Error: 'cloudflared' command not found." -ForegroundColor Red
-    Write-Host "Please download and install it from: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/install-and-setup/installation/"
-    exit
+    Write-Host "'cloudflared' not found. Attempting to install..." -ForegroundColor Yellow
+    
+    # Download
+    $installerUrl = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.msi"
+    $installerPath = "$env:TEMP\cloudflared-installer.msi"
+    Write-Host "Downloading from $installerUrl..."
+    try {
+        Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+        Write-Host "✅ Download complete."
+    } catch {
+        Write-Host "Error downloading installer: $_" -ForegroundColor Red
+        exit
+    }
+    
+    # Install
+    Write-Host "Installing cloudflared..."
+    $installProcess = Start-Process msiexec.exe -ArgumentList "/i `"$installerPath`" /quiet /qn /norestart" -Wait -PassThru
+    if ($installProcess.ExitCode -ne 0) {
+        Write-Host "Error during installation. Exit code: $($installProcess.ExitCode)" -ForegroundColor Red
+        Write-Host "Please try installing manually from the downloaded file: $installerPath"
+        exit
+    }
+    Write-Host "✅ Installation complete."
+    
+    # Clean up installer
+    Remove-Item $installerPath -Force
+    
+    # Add to PATH for the current session to ensure it can be found immediately
+    # The default install path for the MSI is in Program Files (x86)
+    $installDir = "C:\Program Files (x86)\cloudflared"
+    if (Test-Path "$installDir\cloudflared.exe") {
+         $env:Path += ";$installDir"
+         Write-Host "Temporarily added $installDir to PATH for this session."
+    } else {
+        Write-Host "Warning: Could not find cloudflared installation directory to update PATH. A terminal restart may be required after installation." -ForegroundColor Yellow
+    }
+
+    # Verify installation
+    $cloudflaredPath = Get-Command cloudflared -ErrorAction SilentlyContinue
+    if (-not $cloudflaredPath) {
+        Write-Host "Error: cloudflared installation failed or was not found in PATH. Please restart the terminal and try again." -ForegroundColor Red
+        exit
+    }
 }
-Write-Host "✅ cloudflared found at: $($cloudflaredPath.Source)"
+Write-Host "✅ cloudflared is available."
 
 # Step 2: Login
 Write-Host "`nStep 2: Authenticating with Cloudflare..."
