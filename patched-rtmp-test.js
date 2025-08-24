@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const cors = require('cors'); // Import the cors package
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
@@ -144,6 +145,9 @@ const io = new Server(server, {
         credentials: true
     }
 });
+
+// Use the cors middleware for all Express routes
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 app.use(express.static('.'));
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
