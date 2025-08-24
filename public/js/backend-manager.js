@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeBackend === 'rdp') {
             console.log('🔧 Debug - RDP backend detected - using HTTP mode...');
             
-            // Test HTTP connection to RDP backend with SSL bypass attempt
-            fetch(`${backendUrl}/api/health`, {
+            // Test RDP backend connection via Vercel proxy to bypass mixed content policy
+            fetch('/api/rdp-proxy', {
                 mode: 'cors',
                 credentials: 'omit'
             })
