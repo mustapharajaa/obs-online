@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 // TEST THE PATCHED PUPPETEER-SCREEN-RECORDER WITH DIRECT RTMP OUTPUT
 const express = require('express');
