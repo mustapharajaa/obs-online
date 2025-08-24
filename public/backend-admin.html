@@ -258,11 +258,11 @@
             loadBackends() {
                 const defaultBackends = {
                     rdp: {
-                        name: 'RDP Backend',
-                        url: 'http://YOUR_RDP_IP_HERE:3005',
-                        websocket: 'ws://YOUR_RDP_IP_HERE:3005',
+                        name: 'RDP Backend (via Cloudflare)',
+                        url: 'https://obs.liveenity.com',
+                        websocket: 'wss://obs.liveenity.com',
                         type: 'rdp',
-                        description: 'Remote Desktop Protocol server',
+                        description: 'Secure connection via Cloudflare Tunnel',
                         active: true
                     },
                     local: {
