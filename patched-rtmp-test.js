@@ -132,10 +132,16 @@ console.log('✅ PRIMARY_DOMAIN:', process.env.PRIMARY_DOMAIN);
 // This URL will be the public Cloudflare Tunnel address, which doesn't need a port.
 const app = express();
 const server = http.createServer(app);
+
+// Configure CORS for Socket.IO to use environment variables
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ["https://obs.liveenity.com", "http://localhost:3005"];
+console.log('✅ Allowed CORS origins for Socket.IO:', allowedOrigins);
+
 const io = new Server(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
