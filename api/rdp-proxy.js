@@ -2,58 +2,68 @@
 // This bypasses mixed content policy (HTTPS -> HTTP)
 
 export default async function handler(req, res) {
-    // Enable CORS
+    // CORS Headers
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
-    
-    const RDP_BACKEND_URL = 'http://45.76.80.59:3005';
-    
+
+    const RDP_PRIMARY_URL = 'http://45.76.80.59:3005'; // Primary (HTTP)
+    const RDP_FALLBACK_URL = 'https://45.76.80.59:3006'; // Fallback (HTTPS)
+
+    // The fetch logic needs to bypass Node.js's default rejection of self-signed certs for the HTTPS endpoint.
+    const https = require('https');
+    const agent = new https.Agent({
+        rejectUnauthorized: false,
+    });
+
+    async function tryFetch(url) {
+        const healthUrl = `${url}/api/health`;
+        console.log(`Proxy attempting to connect to: ${healthUrl}`);
+        const options = url.startsWith('https') ? { agent } : {};
+        const response = await fetch(healthUrl, options);
+        if (!response.ok) {
+            throw new Error(`Backend at ${url} responded with status ${response.status}`);
+        }
+        return response;
+    }
+
     try {
-        // Health check endpoint - check root path as it returns 200 OK
-        if (req.url === '/api/rdp-proxy' || req.url === '/api/rdp-proxy/') {
-            const response = await fetch(`${RDP_BACKEND_URL}/api/health`);
-            
-            if (response.ok) {
-                // If backend is reachable, return a success status
-                return res.status(200).json({
-                    status: 'ok',
-                    message: 'RDP backend is reachable via proxy.',
-                    proxy: 'vercel',
-                    rdp_backend: RDP_BACKEND_URL
-                });
-            } else {
-                // If backend returns an error status, forward it
-                throw new Error(`RDP backend returned status ${response.status}`);
+        let response;
+        let connectedUrl;
+        try {
+            response = await tryFetch(RDP_PRIMARY_URL);
+            connectedUrl = RDP_PRIMARY_URL;
+            console.log(`✅ Proxy connected successfully to primary URL: ${connectedUrl}`);
+        } catch (primaryError) {
+            console.warn(`⚠️ Primary URL failed: ${primaryError.message}. Trying fallback...`);
+            try {
+                response = await tryFetch(RDP_FALLBACK_URL);
+                connectedUrl = RDP_FALLBACK_URL;
+                console.log(`✅ Proxy connected successfully to fallback URL: ${connectedUrl}`);
+            } catch (fallbackError) {
+                console.error(`❌ Fallback URL also failed: ${fallbackError.message}`);
+                // Throw the original primary error to be caught by the outer try-catch
+                throw primaryError; 
             }
         }
-        
-        // Proxy other requests
-        const targetPath = req.url.replace('/api/rdp-proxy', '');
-        const targetUrl = `${RDP_BACKEND_URL}${targetPath}`;
-        
-        const response = await fetch(targetUrl, {
-            method: req.method,
-            headers: {
-                'Content-Type': 'application/json',
-                ...req.headers
-            },
-            body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
-        });
-        
+
         const data = await response.json();
-        return res.status(response.status).json(data);
-        
+        return res.status(200).json({
+            status: 'ok',
+            message: 'RDP backend is reachable via proxy.',
+            proxy_connected_to: connectedUrl,
+            backend_response: data
+        });
+
     } catch (error) {
-        console.error('RDP Proxy Error:', error);
+        console.error('RDP Proxy Error:', error.message);
         return res.status(500).json({
             error: 'RDP Backend connection failed',
             message: error.message,
-            rdp_backend: RDP_BACKEND_URL
+            tried_urls: [RDP_PRIMARY_URL, RDP_FALLBACK_URL]
         });
     }
 }
