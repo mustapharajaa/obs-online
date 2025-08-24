@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RTMP Streaming Control Panel</title>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="js/backend-manager.js"></script>
     <style>
         * {
@@ -886,7 +887,15 @@
     </div>
 
     <script>
-        const socket = io();
+        let currentEditingFile = ''; // Variable to track which file is being edited
+
+        // Initialize backend manager
+        const backendManager = new BackendManager();
+
+        const socket = io(backendManager.getBackendUrl(), {
+            reconnectionAttempts: 5,
+            timeout: 10000,
+        });
         let isStreaming = false;
 
         // Platform selection
@@ -1051,7 +1060,6 @@
         });
 
         // File Management Functions
-        let currentEditingFile = '';
         
         async function editCookiesFile() {
             try {
