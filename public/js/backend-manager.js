@@ -1,128 +1,84 @@
 // Connect to backend server
 document.addEventListener('DOMContentLoaded', () => {
-    // Get active backend from admin settings or default to current origin
     const activeBackend = localStorage.getItem('selectedBackend') || 'local';
     const backendConfigs = JSON.parse(localStorage.getItem('backendConfigs') || '{}');
-    
-    console.log('🔧 Debug - Active Backend:', activeBackend);
-    console.log('🔧 Debug - Backend Configs:', backendConfigs);
-    
-    let backendUrl = window.location.origin; // Default to current origin (works with Vercel)
-    
-    if (backendConfigs[activeBackend]) {
-        backendUrl = backendConfigs[activeBackend].url;
-        console.log('🔧 Debug - Using configured URL:', backendUrl);
-    } else {
-        console.log('🔧 Debug - No config found, using current origin:', backendUrl);
+    let backendUrl = window.location.origin;
+
+    console.log('🔧 Debug - Active Backend Setting:', activeBackend);
+
+    function setupRdpHttpMode() {
+        console.log('✅ RDP Backend is responsive via proxy. Forcing HTTP-only mode.');
+        if (window.showNotification) {
+            window.showNotification('✅ RDP Backend connected (HTTP mode)', 'success');
+        }
+        window.rdpBackendMode = 'http-only';
     }
-    
-    if (typeof io !== 'undefined') {
-        // Configure Socket.IO to ignore SSL certificate errors for self-signed certificates
+
+    function handleRdpConnectionError(error) {
+        console.log('❌ RDP backend connection failed via proxy:', error.message);
+        if (window.showNotification) {
+            window.showNotification('❌ Cannot connect to RDP Backend', 'error');
+        }
+    }
+
+    function connectWithSocketIO() {
+        if (typeof io === 'undefined') {
+            console.error('Socket.IO client not loaded.');
+            if (window.showNotification) {
+                window.showNotification('❌ Frontend error: Socket.IO library missing', 'error');
+            }
+            return;
+        }
+        console.log('🔧 Debug - Attempting Socket.IO connection...');
+        if (backendConfigs[activeBackend]) {
+            backendUrl = backendConfigs[activeBackend].url;
+        }
         const socketOptions = {
             rejectUnauthorized: false,
-            transports: ['polling', 'websocket'], // Try polling first, then websocket
+            transports: ['polling', 'websocket'],
             timeout: 10000,
             forceNew: true
         };
-        
-        // Special handling for RDP backend - it's HTTP only, not Socket.IO
-        if (activeBackend === 'rdp') {
-            console.log('🔧 Debug - RDP backend detected - using HTTP mode...');
-            
-            // Test RDP backend connection via Vercel proxy to bypass mixed content policy
-            fetch('/api/rdp-proxy', {
-                mode: 'cors',
-                credentials: 'omit'
-            })
-                .then(response => {
-                    console.log('🔧 Debug - RDP backend HTTP test:', response.status);
-                    if (response.ok) {
-                        console.log('✅ RDP Backend connected via HTTP');
-                        if (window.showNotification) {
-                            window.showNotification('✅ RDP Backend connected (HTTP mode)', 'success');
-                        }
-                        
-                        // Set up HTTP-only mode for RDP backend
-                        window.rdpBackendMode = 'http-only';
-                        window.rdpBackendUrl = backendUrl;
-                        
-                        // No Socket.IO connection needed for RDP backend
-                        return;
-                    } else {
-                        throw new Error('RDP backend server not responding');
-                    }
-                })
-                .catch(error => {
-                    console.log('❌ RDP backend connection failed:', error.message);
-                    
-                    // Check if it's an SSL certificate error
-                    if (error.message.includes('certificate') || error.message.includes('SSL') || error.message.includes('CERT')) {
-                        if (window.showNotification) {
-                            window.showNotification('⚠️ SSL Certificate Issue: Visit https://45.76.80.59:3006 to accept certificate', 'warning');
-                        }
-                        
-                        // Provide instructions to user
-                        console.log('🔧 SSL Certificate Fix: Please visit https://45.76.80.59:3006 in a new tab and accept the certificate');
-                        
-                        // Try to open the certificate acceptance page
-                        const acceptLink = document.createElement('a');
-                        acceptLink.href = 'https://45.76.80.59:3006';
-                        acceptLink.target = '_blank';
-                        acceptLink.textContent = 'Click here to accept SSL certificate';
-                        acceptLink.style.cssText = 'display: block; margin: 10px; padding: 10px; background: #ff9800; color: white; text-decoration: none; border-radius: 5px; text-align: center;';
-                        
-                        // Add to page if there's a container
-                        const container = document.querySelector('.notification-container') || document.body;
-                        container.appendChild(acceptLink);
-                        
-                    } else {
-                        if (window.showNotification) {
-                            window.showNotification('❌ Cannot connect to RDP Backend', 'error');
-                        }
-                    }
-                });
-        } else {
-            connectWithSocketIO();
-        }
-        
-        function connectWithSocketIO() {
-            window.socket = io(backendUrl, socketOptions);
-            
-            window.socket.on('connect', () => {
-                console.log(`✅ Connected to backend at ${backendUrl}`);
-                if (window.showNotification) {
-                    window.showNotification('✅ Connected to backend server', 'success');
-                }
-            });
-            
-            window.socket.on('disconnect', () => {
-                console.log('❌ Disconnected from backend');
-                if (window.showNotification) {
-                    window.showNotification('❌ Backend connection lost', 'error');
-                }
-            });
-            
-            window.socket.on('connect_error', (error) => {
-                console.log('❌ Connection error:', error);
-                if (activeBackend === 'rdp') {
-                    handleRDPConnectionFailure(error.message);
-                } else {
-                    if (window.showNotification) {
-                        window.showNotification('❌ Cannot connect to backend', 'error');
-                    }
-                }
-            });
-        }
-        
-        function handleRDPConnectionFailure(errorMessage) {
-            console.log('🔧 Debug - RDP connection failed, trying fallback...');
+        window.socket = io(backendUrl, socketOptions);
+
+        window.socket.on('connect', () => {
+            console.log(`✅ Connected to backend at ${backendUrl}`);
             if (window.showNotification) {
-                window.showNotification('⚠️ RDP Backend: Using HTTP fallback mode', 'warning');
+                window.showNotification('✅ Connected to backend server', 'success');
             }
-            
-            // Set up a simple HTTP-based communication fallback
-            window.rdpBackendMode = 'http-fallback';
-            window.rdpBackendUrl = backendUrl;
-        }
+        });
+
+        window.socket.on('disconnect', () => {
+            console.log('❌ Disconnected from backend');
+            if (window.showNotification) {
+                window.showNotification('❌ Backend connection lost', 'error');
+            }
+        });
+
+        window.socket.on('connect_error', (error) => {
+            console.log('❌ Connection error:', error);
+            if (window.showNotification) {
+                window.showNotification('❌ Cannot connect to backend', 'error');
+            }
+        });
     }
+
+    // Prioritize checking the RDP proxy. If it works, use it regardless of localStorage.
+    fetch('/api/rdp-proxy', { mode: 'cors', credentials: 'omit' })
+        .then(response => {
+            if (response.ok) {
+                // The proxy is working, which means we should be in RDP mode.
+                setupRdpHttpMode();
+            } else {
+                // The proxy endpoint exists but the RDP backend is likely offline.
+                // We should not fallback to Socket.IO here, but show an RDP-specific error.
+                handleRdpConnectionError(new Error(`Proxy responded with status ${response.status}`));
+            }
+        })
+        .catch(error => {
+            // This catch block runs if the /api/rdp-proxy endpoint itself doesn't exist (404) or fails to resolve.
+            // This implies we are NOT trying to connect to the RDP backend, so we can safely fallback to the default Socket.IO connection.
+            console.log('🔧 Debug - RDP proxy not found. Falling back to default connection mode.');
+            connectWithSocketIO();
+        });
 });
