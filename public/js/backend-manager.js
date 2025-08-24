@@ -29,8 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeBackend === 'rdp') {
             console.log('🔧 Debug - RDP backend detected - using HTTP mode...');
             
-            // Test HTTP connection to RDP backend
-            fetch(backendUrl)
+            // Test HTTP connection to RDP backend with SSL bypass attempt
+            fetch(`${backendUrl}/api/health`, {
+                mode: 'cors',
+                credentials: 'omit'
+            })
                 .then(response => {
                     console.log('🔧 Debug - RDP backend HTTP test:', response.status);
                     if (response.ok) {
@@ -50,9 +53,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 })
                 .catch(error => {
-                    console.log('❌ RDP backend connection failed:', error);
-                    if (window.showNotification) {
-                        window.showNotification('❌ Cannot connect to RDP Backend', 'error');
+                    console.log('❌ RDP backend connection failed:', error.message);
+                    
+                    // Check if it's an SSL certificate error
+                    if (error.message.includes('certificate') || error.message.includes('SSL') || error.message.includes('CERT')) {
+                        if (window.showNotification) {
+                            window.showNotification('⚠️ SSL Certificate Issue: Visit https://45.76.80.59:3006 to accept certificate', 'warning');
+                        }
+                        
+                        // Provide instructions to user
+                        console.log('🔧 SSL Certificate Fix: Please visit https://45.76.80.59:3006 in a new tab and accept the certificate');
+                        
+                        // Try to open the certificate acceptance page
+                        const acceptLink = document.createElement('a');
+                        acceptLink.href = 'https://45.76.80.59:3006';
+                        acceptLink.target = '_blank';
+                        acceptLink.textContent = 'Click here to accept SSL certificate';
+                        acceptLink.style.cssText = 'display: block; margin: 10px; padding: 10px; background: #ff9800; color: white; text-decoration: none; border-radius: 5px; text-align: center;';
+                        
+                        // Add to page if there's a container
+                        const container = document.querySelector('.notification-container') || document.body;
+                        container.appendChild(acceptLink);
+                        
+                    } else {
+                        if (window.showNotification) {
+                            window.showNotification('❌ Cannot connect to RDP Backend', 'error');
+                        }
                     }
                 });
         } else {
