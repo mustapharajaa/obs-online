@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     try {
         // Health check endpoint - check root path as it returns 200 OK
         if (req.url === '/api/rdp-proxy' || req.url === '/api/rdp-proxy/') {
-            const response = await fetch(RDP_BACKEND_URL);
+            const response = await fetch(`${RDP_BACKEND_URL}/api/health`);
             
             if (response.ok) {
                 // If backend is reachable, return a success status
