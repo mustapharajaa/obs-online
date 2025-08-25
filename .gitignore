@@ -131,7 +131,6 @@ videos/
 
 # Stream state files (contain sensitive data)
 rtmp-stream-*-state.txt
-browser-state-data.txt
 
 # Cookies and session data
 cookies.json

@@ -1,3 +1,6 @@
+# Set execution policy for the current process to allow script execution
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
 # Cloudflare Tunnel Setup Script
 # This script automates the setup of a Cloudflare Tunnel to securely expose your local server.
 
@@ -98,23 +101,40 @@ try {
 }
 
 # Step 3: Create Tunnel
-Write-Host "`nStep 3: Creating tunnel '$TunnelName'..."
-$tunnelCreateOutput = cloudflared tunnel create $TunnelName 2>&1
-if ($LASTEXITCODE -ne 0) {
-    if ($tunnelCreateOutput -like "*already exists*") {
-        Write-Host "Tunnel '$TunnelName' already exists. Skipping creation." -ForegroundColor Cyan
+Write-Host "Step 3: Creating tunnel '$TunnelName'..."
+$tunnelList = cloudflared tunnel list
+$existingTunnel = $tunnelList | Select-String -Pattern "^$TunnelName\s+([a-f0-9-]+)"
+
+if ($existingTunnel) {
+    $tunnelId = $existingTunnel.Matches[0].Groups[1].Value
+    $credentialFile = "$env:USERPROFILE\.cloudflared\$tunnelId.json"
+    
+    Write-Host "Tunnel '$TunnelName' already exists with ID: $tunnelId"
+
+    if (Test-Path $credentialFile) {
+        Write-Host "✅ Credentials file found at $credentialFile"
     } else {
-        Write-Host "Error creating tunnel: $tunnelCreateOutput" -ForegroundColor Red
-        exit
+        Write-Host "⚠️ Credentials file not found. The tunnel may be misconfigured."
+        Write-Host "You may need to delete the tunnel from the Cloudflare dashboard and re-run this script."
+        Write-Host "Attempting to proceed, but routing may fail."
     }
 } else {
-     Write-Host "✅ Tunnel '$TunnelName' created successfully."
+    Write-Host "Tunnel '$TunnelName' not found. Creating a new one..."
+    $creationOutput = cloudflared tunnel create $TunnelName
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Failed to create tunnel. Please check your Cloudflare configuration."
+        Write-Host $creationOutput
+        exit 1
+    }
+    Write-Host "✅ Tunnel '$TunnelName' created successfully."
+    # Extract Tunnel ID from creation output
+    $tunnelId = ($creationOutput | Select-String -Pattern '([a-f0-9-]+)$').Matches[0].Groups[1].Value
+    Write-Host "Tunnel ID: $tunnelId"
 }
 
 # Extract Tunnel ID and credentials file path from the output of 'cloudflared tunnel list'
 $tunnelInfo = cloudflared tunnel list | Where-Object { $_ -match $TunnelName }
 $tunnelId = ($tunnelInfo -split ' ')[0]
-
 if (-not $tunnelId) {
     Write-Host "Error: Could not retrieve Tunnel ID. Please check 'cloudflared tunnel list' manually." -ForegroundColor Red
     exit

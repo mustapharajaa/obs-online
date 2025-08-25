@@ -1,0 +1,792 @@
+{
+  "timestamp": "2:18:14 PM",
+  "viewport": {
+    "basic": {
+      "innerWidth": 1142,
+      "innerHeight": 701,
+      "outerWidth": 1158,
+      "outerHeight": 795,
+      "screenX": 205,
+      "screenY": 90,
+      "scrollX": 0,
+      "scrollY": 3435,
+      "devicePixelRatio": 1
+    },
+    "visualViewport": {
+      "width": 1136,
+      "height": 695,
+      "offsetLeft": 0,
+      "offsetTop": 0,
+      "pageLeft": 0,
+      "pageTop": 3435,
+      "scale": 1
+    },
+    "svelteAdvanced": {
+      "dpi": 1,
+      "divDPI": 1,
+      "isZoomed": false,
+      "isIOSZoom": false,
+      "zoomScale": 1,
+      "isPortrait": false,
+      "isLandscape": true,
+      "zoomAreaBox": {
+        "size": [
+          1136,
+          695
+        ],
+        "point": [
+          0,
+          0
+        ],
+        "offset": [
+          0,
+          6,
+          6,
+          0
+        ]
+      },
+      "viewAreaBox": {
+        "size": [
+          1142,
+          701
+        ],
+        "point": [
+          0,
+          3435
+        ],
+        "offset": [
+          3435,
+          164,
+          6,
+          0
+        ]
+      },
+      "pagePosition": {
+        "documentWidth": 1300,
+        "documentHeight": 4136,
+        "scrollPosition": {
+          "x": 0,
+          "y": 3435,
+          "maxX": 158,
+          "maxY": 3435
+        },
+        "viewportPosition": {
+          "left": 0,
+          "top": 3435,
+          "right": 1142,
+          "bottom": 4136
+        },
+        "scrollRatio": {
+          "x": 0,
+          "y": 1
+        },
+        "readingPosition": {
+          "readingLine": 3645.3,
+          "progress": 0.8813588007736944,
+          "estimatedTimeRemaining": 3,
+          "currentSection": {
+            "text": "Shan United vs Svay Rieng FC live score, prediction (2025/08/21)",
+            "level": 1,
+            "id": null
+          }
+        }
+      },
+      "elementPositions": [
+        {
+          "selector": "header",
+          "tagName": "header",
+          "id": null,
+          "className": "first-header",
+          "position": {
+            "viewport": {
+              "left": 0,
+              "top": -3435,
+              "right": 1300,
+              "bottom": -3375,
+              "width": 1300,
+              "height": 60
+            },
+            "document": {
+              "left": 0,
+              "top": 0,
+              "right": 1300,
+              "bottom": 60
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": "nav",
+          "tagName": "nav",
+          "id": null,
+          "className": "inner h-bar-100 flex justify-between border-box",
+          "position": {
+            "viewport": {
+              "left": 50,
+              "top": -3435,
+              "right": 1250,
+              "bottom": -3375,
+              "width": 1200,
+              "height": 60
+            },
+            "document": {
+              "left": 50,
+              "top": 0,
+              "right": 1250,
+              "bottom": 60
+            },
+            "css": {
+              "position": "relative",
+              "zIndex": "auto",
+              "display": "flex",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": "h1",
+          "tagName": "h1",
+          "id": null,
+          "className": "text",
+          "position": {
+            "viewport": {
+              "left": 402.734375,
+              "top": -3327,
+              "right": 753.171875,
+              "bottom": -3295,
+              "width": 350.4375,
+              "height": 32
+            },
+            "document": {
+              "left": 402.734375,
+              "top": 108,
+              "right": 753.171875,
+              "bottom": 140
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": ".header",
+          "tagName": "div",
+          "id": null,
+          "className": "header",
+          "position": {
+            "viewport": {
+              "left": 0,
+              "top": -3435,
+              "right": 1300,
+              "bottom": -3327,
+              "width": 1300,
+              "height": 108
+            },
+            "document": {
+              "left": 0,
+              "top": 0,
+              "right": 1300,
+              "bottom": 108
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        },
+        {
+          "selector": ".content",
+          "tagName": "div",
+          "id": null,
+          "className": "content border-box",
+          "position": {
+            "viewport": {
+              "left": 50,
+              "top": -1503,
+              "right": 1250,
+              "bottom": -259,
+              "width": 1200,
+              "height": 1244
+            },
+            "document": {
+              "left": 50,
+              "top": 1932,
+              "right": 1250,
+              "bottom": 3176
+            },
+            "css": {
+              "position": "static",
+              "zIndex": "auto",
+              "display": "block",
+              "visibility": "visible",
+              "opacity": "1"
+            }
+          },
+          "visibility": {
+            "isVisible": true,
+            "isInViewport": false,
+            "visibleRatio": 0
+          }
+        }
+      ],
+      "scrollMetrics": {
+        "current": {
+          "x": 0,
+          "y": 3435
+        },
+        "maximum": {
+          "x": 158,
+          "y": 3435
+        },
+        "percentage": {
+          "x": 0,
+          "y": 100
+        },
+        "direction": {
+          "x": 0,
+          "y": 0
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0
+        },
+        "behavior": {
+          "isAtTop": false,
+          "isAtBottom": true,
+          "isAtLeft": true,
+          "isAtRight": false,
+          "canScrollVertically": true,
+          "canScrollHorizontally": true
+        },
+        "sectionsInView": []
+      },
+      "intersectionData": {
+        "observedElements": [
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "pcLogo",
+              "src": "https://static.aiscore.com/_nuxt/img/logo.948162c.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -3420,
+                "left": 50,
+                "bottom": -3390,
+                "right": 159,
+                "width": 109,
+                "height": 30
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "appIcon",
+              "src": "https://static.aiscore.com/_nuxt/img/appIcon.66614fb.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -3425,
+                "left": 729,
+                "bottom": -3385,
+                "right": 807,
+                "width": 78,
+                "height": 40
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w60"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -3234,
+                "left": 425.4375,
+                "bottom": -3182,
+                "right": 477.4375,
+                "width": 52,
+                "height": 52
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": null,
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w60"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -3234,
+                "left": 822.578125,
+                "bottom": -3182,
+                "right": 874.578125,
+                "width": 52,
+                "height": 52
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "oddType",
+              "src": "https://img1.aiscore.com/other/fe8aec51afeb2de633c9.png"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -3100,
+                "left": 113.75,
+                "bottom": -3075,
+                "right": 195.75,
+                "width": 82,
+                "height": 25
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "iframe",
+              "id": null,
+              "className": null,
+              "src": "https://widgets.thesports01.com/en/3d/football?profile=74rekh26eseunr0&id=4407353"
+            },
+            "intersection": {
+              "ratio": 0.9204545454545454,
+              "isIntersecting": true,
+              "boundingClientRect": {
+                "top": 348,
+                "left": -31.5,
+                "bottom": 675,
+                "right": 364.5,
+                "width": 396,
+                "height": 327
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "ml-xs w-24 h-24 of-cta",
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -2788,
+                "left": 58,
+                "bottom": -2764,
+                "right": 82,
+                "width": 24,
+                "height": 24
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "w-24 h-24 of-cta mr-xs",
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -2788,
+                "left": 805,
+                "bottom": -2764,
+                "right": 829,
+                "width": 24,
+                "height": 24
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "teamLogo",
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w60"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -2936,
+                "left": 866,
+                "bottom": -2904,
+                "right": 898,
+                "width": 32,
+                "height": 32
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "teamLogo",
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w60"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -2936,
+                "left": 1202,
+                "bottom": -2904,
+                "right": 1234,
+                "width": 32,
+                "height": 32
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "ml-xs w-24 h-24 of-cta",
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "w-24 h-24 of-cta mr-xs",
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": 0,
+                "left": 0,
+                "bottom": 0,
+                "right": 0,
+                "width": 0,
+                "height": 0
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "w-24",
+              "src": "https://img0.aiscore.com/football/team/81591ca25d2179a9877ec9c24bbe59e3.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -890,
+                "left": 75,
+                "bottom": -866,
+                "right": 99,
+                "width": 24,
+                "height": 24
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "w-24",
+              "src": "https://img0.aiscore.com/football/team/8b784b23ff2eac9bbdb4437cbc291d52.png!w30"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -888.796875,
+                "left": 658.5,
+                "bottom": -867.203125,
+                "right": 682.5,
+                "width": 24,
+                "height": 21.59375
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "br-50 player-logo",
+              "src": "https://img0.aiscore.com/football/player/4d7c992c49ef2b4a358830ce973de79b.png!w50"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -848,
+                "left": 105,
+                "bottom": -812,
+                "right": 141,
+                "width": 36,
+                "height": 36
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "br-50 player-logo",
+              "src": "https://img0.aiscore.com/football/player/b12c0129917e74962e6901e00808d47b.png!w50"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -848,
+                "left": 688.5,
+                "bottom": -812,
+                "right": 724.5,
+                "width": 36,
+                "height": 36
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "br-50 player-logo",
+              "src": "https://img0.aiscore.com/football/player/ebaeb832f5bf6244502ec7e8895327cb.png!w50"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -800,
+                "left": 105,
+                "bottom": -764,
+                "right": 141,
+                "width": 36,
+                "height": 36
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "br-50 player-logo",
+              "src": "https://img0.aiscore.com/football/player/52e0882334a07a913bb7f76739faa1fa.png!w50"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -800,
+                "left": 688.5,
+                "bottom": -764,
+                "right": 724.5,
+                "width": 36,
+                "height": 36
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "br-50 player-logo",
+              "src": "https://img0.aiscore.com/football/player/96df2ca4203f4dd703bd86286df790b6.png!w50"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -752,
+                "left": 105,
+                "bottom": -716,
+                "right": 141,
+                "width": 36,
+                "height": 36
+              }
+            }
+          },
+          {
+            "element": {
+              "tagName": "img",
+              "id": null,
+              "className": "br-50 player-logo",
+              "src": "https://img0.aiscore.com/football/player/d4ec598e44db9f6afeab73ff5ce687ea.png!w50"
+            },
+            "intersection": {
+              "ratio": 0,
+              "isIntersecting": false,
+              "boundingClientRect": {
+                "top": -752,
+                "left": 688.5,
+                "bottom": -716,
+                "right": 724.5,
+                "width": 36,
+                "height": 36
+              }
+            }
+          }
+        ],
+        "viewportIntersections": [],
+        "rootMarginEffects": [
+          {
+            "margin": "0px",
+            "estimatedEffect": "Elements would intersect 0px earlier"
+          },
+          {
+            "margin": "50px",
+            "estimatedEffect": "Elements would intersect 50px earlier"
+          },
+          {
+            "margin": "100px",
+            "estimatedEffect": "Elements would intersect 100px earlier"
+          },
+          {
+            "margin": "200px",
+            "estimatedEffect": "Elements would intersect 200px earlier"
+          }
+        ]
+      },
+      "preciseWidth": 1142,
+      "preciseHeight": 701,
+      "safeArea": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "threshold": [
+        58,
+        36
+      ]
+    }
+  },
+  "device": {
+    "isPC": true,
+    "isMobile": false,
+    "isTablet": false,
+    "isIOS": false,
+    "isAndroid": false,
+    "isBlink": true,
+    "isWebkit": false,
+    "isMacSafari": false,
+    "isLegacy": false,
+    "touchSupport": false,
+    "orientationSupport": true,
+    "geolocationSupport": true,
+    "gamepadSupport": true,
+    "platform": "Win32",
+    "language": "en-US",
+    "languages": [
+      "en-US",
+      "en"
+    ],
+    "cookieEnabled": true,
+    "onLine": true
+  },
+  "audio": {
+    "sampleRate": 48000,
+    "state": "running",
+    "baseLatency": 0.01,
+    "outputLatency": 0,
+    "destination": {
+      "channelCount": 2,
+      "channelCountMode": "explicit",
+      "channelInterpretation": "speakers"
+    }
+  },
+  "performance": {
+    "memory": {
+      "usedJSHeapSize": 51157896,
+      "totalJSHeapSize": 54123684,
+      "jsHeapSizeLimit": 4294705152
+    },
+    "timing": {
+      "navigationStart": 1756095802092,
+      "loadEventEnd": 1756095805204,
+      "domContentLoadedEventEnd": 1756095802858,
+      "responseEnd": 1756095802099
+    },
+    "connection": {
+      "effectiveType": "3g",
+      "downlink": 1.4,
+      "rtt": 300,
+      "saveData": false
+    }
+  },
+  "sensors": {
+    "geolocation": null,
+    "gyroscope": null,
+    "accelerometer": null
+  }
+}

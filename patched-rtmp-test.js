@@ -130,7 +130,7 @@ function ensureRequiredFiles() {
 ensureRequiredFiles();
 
 // Verify .env variables are loaded
-console.log('✅ PRIMARY_DOMAIN:', process.env.BACKEND_DOMAIN);
+console.log('✅ PRIMARY_DOMAIN:', process.env.PRIMARY_DOMAIN);
 
 // This URL will be the public Cloudflare Tunnel address, which doesn't need a port.
 const app = express();
@@ -247,68 +247,95 @@ io.on('connection', (socket) => {
             const rtmpEndpoint = `${rtmpUrl}/${streamKey}`;
             console.log(`🚀 [Stream ${streamId}] Starting PATCHED RTMP streaming for: ${url} → ${rtmpEndpoint}`);
             console.log(`📊 Active streams: ${activeStreams.size + 1}`);
-            
-            // Define exact position settings (same as puppeteer-exact-viewport.js)
-            const exactPosition = {
-                windowWidth: 964,
-                windowHeight: 636,
-                positionX: 268,
-                positionY: 64,
-                scrollX: 49,
-                scrollY: 459
-            };
-            console.log(`🪟 [Stream ${streamId}] Using exact position: ${exactPosition.windowWidth}x${exactPosition.windowHeight} at ${exactPosition.positionX},${exactPosition.positionY}`);
-            console.log(`📜 [Stream ${streamId}] Using exact scroll: X=${exactPosition.scrollX}, Y=${exactPosition.scrollY}`);
+
+            // Parse resolution from control panel to set viewport
+            const [captureWidth, captureHeight] = resolution.split('x').map(Number);
+            console.log(`🖥️ [Stream ${streamId}] Setting viewport to: ${captureWidth}x${captureHeight}`);
             
             // Launch dedicated browser for this stream
             console.log(`🌐 [Stream ${streamId}] Launching dedicated browser...`);
             let browser, page;
+            let exactHardcoded; // To be used across blocks
+
             try {
-                // Try to find Chrome executable
+                // Find Chrome executable
                 let chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-                
                 if (!fs.existsSync(chromePath)) {
                     chromePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
                     console.log(`🔍 [Stream ${streamId}] Trying alternative Chrome path...`);
                 }
-                
                 if (!fs.existsSync(chromePath)) {
                     console.log(`🔍 [Stream ${streamId}] Using system default Chrome...`);
                     chromePath = undefined;
                 }
-                
                 console.log(`🌐 [Stream ${streamId}] Using Chrome at: ${chromePath || 'system default'}`);
+
+                // Load exact browser state from file
+                try {
+                    const data = fs.readFileSync('browser-state-data.txt', 'utf8');
+                    const stateData = JSON.parse(data);
+
+                    // --- Definitive Fix: Correctly map all nested properties ---
+                    exactHardcoded = {
+                        windowWidth: stateData.viewport?.basic?.outerWidth,
+                        windowHeight: stateData.viewport?.basic?.outerHeight,
+                        positionX: stateData.viewport?.basic?.screenX,
+                        positionY: stateData.viewport?.basic?.screenY,
+                        scrollX: stateData.viewport?.basic?.scrollX,
+                        scrollY: stateData.viewport?.basic?.scrollY,
+                        deviceScaleFactor: stateData.viewport?.basic?.devicePixelRatio,
+                        userAgent: stateData.browser?.userAgent
+                    };
+                    console.log('✅ Successfully loaded and correctly mapped browser state from file.');
+                } catch (err) {
+                    console.error('❌ Error reading or parsing browser state file, using fallback values:', err);
+                    exactHardcoded = {
+                        windowWidth: 1280, windowHeight: 720, positionX: 100, positionY: 100,
+                        scrollX: 0, scrollY: 0, deviceScaleFactor: 1,
+                        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    };
+                }
+
+                const launchArgs = [
+                    '--no-sandbox', '--disable-setuid-sandbox', '--disable-infobars',
+                    '--ignore-certifcate-errors', '--ignore-certifcate-errors-spki-list',
+                    `--window-size=${exactHardcoded.windowWidth},${exactHardcoded.windowHeight}`,
+                    `--window-position=${exactHardcoded.positionX},${exactHardcoded.positionY}`,
+                    `--force-device-scale-factor=${exactHardcoded.deviceScaleFactor}`,
+                    `--user-agent=${exactHardcoded.userAgent}`,
+                    `--user-data-dir=./chrome-data-rtmp-${streamId}`,
+                    '--disable-dev-shm-usage', '--disable-web-security', '--disable-features=VizDisplayCompositor'
+                ];
                 
+                console.log(`🪟 [Stream ${streamId}] EXACT SIZE: ${exactHardcoded.windowWidth}x${exactHardcoded.windowHeight}`);
+                console.log(`📍 [Stream ${streamId}] EXACT POSITION: ${exactHardcoded.positionX},${exactHardcoded.positionY}`);
+                console.log(`📜 [Stream ${streamId}] EXACT SCROLL: ${exactHardcoded.scrollX},${exactHardcoded.scrollY}`);
+
                 browser = await puppeteer.launch({
-                    headless: false, // Show the browser window
-                    defaultViewport: null, // Let browser determine viewport based on window size
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-web-security',
-                        '--disable-features=VizDisplayCompositor',
-                        `--window-size=${exactPosition.windowWidth},${exactPosition.windowHeight}`,
-                        `--window-position=${exactPosition.positionX + (streamId - 1) * 20},${exactPosition.positionY + (streamId - 1) * 20}`, // Offset each stream window
-                        `--user-data-dir=./chrome-data-rtmp-${streamId}` // Unique user data directory for each stream
-                    ]
+                    headless: false, executablePath: chromePath, args: launchArgs,
+                    ignoreDefaultArgs: ['--enable-automation'], defaultViewport: null
                 });
-                console.log(`✅ [Stream ${streamId}] Browser launched with window ${exactPosition.windowWidth}x${exactPosition.windowHeight} at position ${exactPosition.positionX},${exactPosition.positionY}`);
 
-                page = await browser.newPage();
-                console.log(`✅ [Stream ${streamId}] New page created`);
-                
-                // No viewport setting - capture entire browser window (1212x672)
-                console.log(`✅ [Stream ${streamId}] Using full browser window for capture`);
+                const pages = await browser.pages();
+                page = pages.length > 0 ? pages[0] : await browser.newPage();
 
-                // Set user agent (same as puppeteer-exact-viewport.js)
-                await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-                console.log(`🌐 [Stream ${streamId}] User agent set to match exact viewport browser`);
+                console.log(`✅ [Stream ${streamId}] Browser launched. Viewport will be determined by window size.`);
 
-                // Load cookies for authentication
                 const cookiesHelper = new CookiesHelper();
                 await cookiesHelper.applyCookiesToPage(page);
                 console.log(`🍪 [Stream ${streamId}] Cookies applied to browser`);
+
+                await page.setRequestInterception(true);
+                page.on('request', (request) => {
+                    const blockedDomains = ['facebook.net', 'facebook.com', 'google-analytics.com', 'googletagmanager.com', 'doubleclick.net'];
+                    if (blockedDomains.some(domain => request.url().includes(domain))) {
+                        request.abort();
+                    } else {
+                        request.continue();
+                    }
+                });
+                console.log(`✅ [Stream ${streamId}] Request blocking enabled.`);
+
             } catch (browserError) {
                 console.error(`❌ [Stream ${streamId}] Browser launch error:`, browserError);
                 throw browserError;
@@ -318,167 +345,66 @@ io.on('connection', (socket) => {
             console.log(`🌐 [Stream ${streamId}] Navigating to: ${url}`);
             console.log(`🔍 [Stream ${streamId}] DEBUG: About to call page.goto...`);
             try {
-                console.log(`🔍 [Stream ${streamId}] DEBUG: Calling page.goto with 5min timeout...`);
-                await page.goto(url, { waitUntil: 'networkidle2', timeout: 300000 });
-                console.log(`✅ [Stream ${streamId}] Navigated to: ${url}`);
-                console.log(`🔍 [Stream ${streamId}] DEBUG: Navigation successful, proceeding to page setup...`);
+                console.log(`🔍 [Stream ${streamId}] DEBUG: Calling page.goto with domcontentloaded...`);
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                console.log(`🧭 [Stream ${streamId}] Navigated to ${url}`);
 
-                // Set exact scroll position (same as puppeteer-exact-viewport.js)
-                console.log(`📜 [Stream ${streamId}] Setting exact scroll position...`);
-                await page.evaluate((scrollX, scrollY) => {
-                    window.scrollTo(scrollX, scrollY);
-                }, exactPosition.scrollX, exactPosition.scrollY);
+                // === START: Exact Viewport and State Restoration ===
 
-                // No zoom applied - keep natural 100% view (same as puppeteer-exact-viewport.js)
-                console.log(`✅ [Stream ${streamId}] Keeping natural 100% zoom for full-size view...`);
-                
-                // Force full viewport usage with aggressive CSS (same as puppeteer-exact-viewport.js)
-                console.log(`🔧 [Stream ${streamId}] Forcing full viewport usage...`);
+                // 1. Force full viewport usage with aggressive CSS
+                console.log(`🔧 [Stream ${streamId}] Injecting aggressive CSS to force full viewport...`);
                 await page.evaluate(() => {
-                    // Force HTML and body to use full viewport dimensions with !important
-                    document.documentElement.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
-                    document.body.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
-                    
-                    // Force recalculation
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        html, body {
+                            width: 100vw !important;
+                            height: 100vh !important;
+                            zoom: 1 !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            overflow: visible !important; /* Allow scrolling */
+                        }
+                    `;
+                    document.head.appendChild(style);
                     window.dispatchEvent(new Event('resize'));
-                    
-                    // Log the results
-                    console.log('✅ FORCED full viewport usage with !important styles');
-                    console.log('📏 HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
-                    console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
-                    console.log('🎯 Match:', (document.documentElement.clientWidth === window.innerWidth && document.documentElement.clientHeight === window.innerHeight) ? 'PERFECT' : 'STILL DIFFERENT');
+                    console.log('✅ Injected aggressive CSS to override inline styles.');
                 });
 
-                // Run comprehensive page parameter detection (same as puppeteer-exact-viewport.js)
-                console.log(`🔍 [Stream ${streamId}] Running comprehensive page parameter detection...`);
-                await page.evaluate(() => {
-                    console.log('🔍 COMPREHENSIVE PAGE PARAMETER DETECTION:');
-                    console.log('='.repeat(60));
-                    console.log('📱 VIEWPORT & WINDOW:');
-                    console.log('   Viewport (inner):', window.innerWidth + 'x' + window.innerHeight);
-                    console.log('   Window (outer):', window.outerWidth + 'x' + window.outerHeight);
-                    console.log('   Position X,Y:', window.screenX + ',' + window.screenY);
-                    console.log('📜 SCROLL PARAMETERS:');
-                    console.log('   Current Scroll X,Y:', window.scrollX + ',' + window.scrollY);
-                    console.log('   Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
-                    console.log('   Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
-                    console.log('🔍 ZOOM & SCALING:');
-                    console.log('   Device Pixel Ratio:', window.devicePixelRatio);
-                    console.log('   Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
-                    console.log('   Body Zoom Style:', document.body.style.zoom || 'none');
-                    console.log('   Body Transform:', document.body.style.transform || 'none');
-                    console.log('   Computed Body Zoom:', window.getComputedStyle(document.body).zoom || 'auto');
-                    console.log('   HTML Zoom:', document.documentElement.style.zoom || 'none');
-                    console.log('📐 ELEMENT SIZES:');
-                    console.log('   Body Client:', document.body.clientWidth + 'x' + document.body.clientHeight);
-                    console.log('   Body Offset:', document.body.offsetWidth + 'x' + document.body.offsetHeight);
-                    console.log('   Body Scroll:', document.body.scrollWidth + 'x' + document.body.scrollHeight);
-                    console.log('   HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
-                    console.log('🎯 CSS PROPERTIES:');
-                    const bodyStyle = window.getComputedStyle(document.body);
-                    console.log('   Font Size:', bodyStyle.fontSize);
-                    console.log('   Line Height:', bodyStyle.lineHeight);
-                    console.log('   Transform:', bodyStyle.transform);
-                    console.log('   Scale:', bodyStyle.scale || 'none');
-                    console.log('📊 SCREEN INFO:');
-                    console.log('   Screen Resolution:', screen.width + 'x' + screen.height);
-                    console.log('   Available Screen:', screen.availWidth + 'x' + screen.availHeight);
-                    console.log('   Color Depth:', screen.colorDepth + ' bits');
-                    console.log('   Pixel Depth:', screen.pixelDepth + ' bits');
-                    console.log('🌐 BROWSER INFO:');
-                    console.log('   User Agent:', navigator.userAgent.substring(0, 100) + '...');
-                    console.log('   Platform:', navigator.platform);
-                    console.log('   Language:', navigator.language);
-                    console.log('='.repeat(60));
-                });
+                // 2. Set exact scroll position after a short delay to allow layout to settle
+                await new Promise(resolve => setTimeout(resolve, 250)); // 250ms delay
 
-                // Set exact scroll position (same as puppeteer-exact-viewport.js)
-                console.log(`📜 [Stream ${streamId}] Setting exact scroll position...`);
+                console.log(`📜 [Stream ${streamId}] Setting FINAL scroll position to: ${exactHardcoded.scrollX}, ${exactHardcoded.scrollY}`);
                 await page.evaluate((scrollX, scrollY) => {
+                    // Use multiple methods to ensure scroll is set reliably
+                    document.documentElement.scrollLeft = scrollX;
+                    document.documentElement.scrollTop = scrollY;
+                    document.body.scrollLeft = scrollX;
+                    document.body.scrollTop = scrollY;
                     window.scrollTo(scrollX, scrollY);
-                }, exactPosition.scrollX, exactPosition.scrollY);
+                }, exactHardcoded.scrollX, exactHardcoded.scrollY);
 
-                // No zoom applied - keep natural 100% view (same as puppeteer-exact-viewport.js)
-                console.log(`✅ [Stream ${streamId}] Keeping natural 100% zoom for full-size view...`);
-                
-                // Force full viewport usage with aggressive CSS (same as puppeteer-exact-viewport.js)
-                console.log(`🔧 [Stream ${streamId}] Forcing full viewport usage...`);
-                await page.evaluate(() => {
-                    // Force HTML and body to use full viewport dimensions with !important
-                    document.documentElement.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
-                    document.body.style.cssText = 'margin:0!important;padding:0!important;width:100%!important;height:100%!important;box-sizing:border-box!important;border:none!important;outline:none!important;';
-                    
-                    // Force recalculation
-                    window.dispatchEvent(new Event('resize'));
-                    
-                    // Log the results
-                    console.log('✅ FORCED full viewport usage with !important styles');
-                    console.log('📏 HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
-                    console.log('📱 Viewport:', window.innerWidth + 'x' + window.innerHeight);
-                    console.log('🎯 Match:', (document.documentElement.clientWidth === window.innerWidth && document.documentElement.clientHeight === window.innerHeight) ? 'PERFECT' : 'STILL DIFFERENT');
-                });
-
-                // Run comprehensive page parameter detection (same as puppeteer-exact-viewport.js)
-                console.log(`🔍 [Stream ${streamId}] Running comprehensive page parameter detection...`);
-                await page.evaluate(() => {
-                    console.log('🔍 COMPREHENSIVE PAGE PARAMETER DETECTION:');
-                    console.log('='.repeat(60));
-                    console.log('📱 VIEWPORT & WINDOW:');
-                    console.log('   Viewport (inner):', window.innerWidth + 'x' + window.innerHeight);
-                    console.log('   Window (outer):', window.outerWidth + 'x' + window.outerHeight);
-                    console.log('   Position X,Y:', window.screenX + ',' + window.screenY);
-                    console.log('📜 SCROLL PARAMETERS:');
-                    console.log('   Current Scroll X,Y:', window.scrollX + ',' + window.scrollY);
-                    console.log('   Page Size:', document.documentElement.scrollWidth + 'x' + document.documentElement.scrollHeight);
-                    console.log('   Max Scroll:', (document.documentElement.scrollWidth - window.innerWidth) + ',' + (document.documentElement.scrollHeight - window.innerHeight));
-                    console.log('🔍 ZOOM & SCALING:');
-                    console.log('   Device Pixel Ratio:', window.devicePixelRatio);
-                    console.log('   Zoom Level:', Math.round(window.devicePixelRatio * 100) + '%');
-                    console.log('   Body Zoom Style:', document.body.style.zoom || 'none');
-                    console.log('   Body Transform:', document.body.style.transform || 'none');
-                    console.log('   Computed Body Zoom:', window.getComputedStyle(document.body).zoom || 'auto');
-                    console.log('   HTML Zoom:', document.documentElement.style.zoom || 'none');
-                    console.log('📐 ELEMENT SIZES:');
-                    console.log('   Body Client:', document.body.clientWidth + 'x' + document.body.clientHeight);
-                    console.log('   Body Offset:', document.body.offsetWidth + 'x' + document.body.offsetHeight);
-                    console.log('   Body Scroll:', document.body.scrollWidth + 'x' + document.body.scrollHeight);
-                    console.log('   HTML Client:', document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight);
-                    console.log('🎯 CSS PROPERTIES:');
-                    const bodyStyle = window.getComputedStyle(document.body);
-                    console.log('   Font Size:', bodyStyle.fontSize);
-                    console.log('   Line Height:', bodyStyle.lineHeight);
-                    console.log('   Transform:', bodyStyle.transform);
-                    console.log('   Scale:', bodyStyle.scale || 'none');
-                    console.log('📊 SCREEN INFO:');
-                    console.log('   Screen Resolution:', screen.width + 'x' + screen.height);
-                    console.log('   Available Screen:', screen.availWidth + 'x' + screen.availHeight);
-                    console.log('   Color Depth:', screen.colorDepth + ' bits');
-                    console.log('   Pixel Depth:', screen.pixelDepth + ' bits');
-                    console.log('🌐 BROWSER INFO:');
-                    console.log('   User Agent:', navigator.userAgent.substring(0, 100) + '...');
-                    console.log('   Platform:', navigator.platform);
-                    console.log('   Language:', navigator.language);
-                    console.log('='.repeat(60));
-                });
-
-                // Get viewport info for terminal display (same as puppeteer-exact-viewport.js)
-                const viewportInfo = await page.evaluate(() => {
+                // 3. Run comprehensive detection and verification
+                console.log(`🔍 [Stream ${streamId}] Verifying final browser state...`);
+                const finalState = await page.evaluate(() => {
                     return {
-                        viewport: window.innerWidth + 'x' + window.innerHeight,
-                        windowSize: window.outerWidth + 'x' + window.outerHeight,
-                        position: window.screenX + ',' + window.screenY,
-                        scroll: window.scrollX + ',' + window.scrollY
+                        viewport: `${window.innerWidth}x${window.innerHeight}`,
+                        windowSize: `${window.outerWidth}x${window.outerHeight}`,
+                        position: `${window.screenX},${window.screenY}`,
+                        scroll: `${window.scrollX},${window.scrollY}`,
+                        htmlClient: `${document.documentElement.clientWidth}x${document.documentElement.clientHeight}`
                     };
                 });
 
-                console.log(`✅ [Stream ${streamId}] Browser launched successfully!`);
-                console.log(`📊 [Stream ${streamId}] COMPLETE VERIFICATION:`);
-                console.log(`   🪟 Window Size - Requested: ${exactPosition.windowWidth}x${exactPosition.windowHeight} | Actual: ${viewportInfo.windowSize}`);
-                console.log(`   📍 Position - Requested: ${exactPosition.positionX},${exactPosition.positionY} | Actual: ${viewportInfo.position}`);
-                console.log(`   📜 Scroll - Requested: ${exactPosition.scrollX},${exactPosition.scrollY} | Actual: ${viewportInfo.scroll}`);
-                console.log(`   📱 Viewport: ${viewportInfo.viewport}`);
-                console.log(`🎯 [Stream ${streamId}] PERFECT! All parameters match exactly!`);
-                
+                console.log(`📊 [Stream ${streamId}] VERIFICATION COMPLETE:`);
+                console.log(`   - Window Size:  Requested: ${exactHardcoded.windowWidth || 'N/A'}x${exactHardcoded.windowHeight || 'N/A'} | Actual: ${finalState.windowSize}`);
+                console.log(`   - Position:     Requested: ${exactHardcoded.positionX || 'N/A'},${exactHardcoded.positionY || 'N/A'} | Actual: ${finalState.position}`);
+                console.log(`   - Viewport:     Requested: ${exactHardcoded.viewportWidth || 'N/A'}x${exactHardcoded.viewportHeight || 'N/A'} | Actual: ${finalState.viewport}`);
+                console.log(`   - Scroll:       Requested: ${exactHardcoded.scrollX || 'N/A'},${exactHardcoded.scrollY || 'N/A'} | Actual: ${finalState.scroll}`);
+                console.log(`   - HTML Size:    ${finalState.htmlClient}`);
+                console.log(`🎯 [Stream ${streamId}] Browser state restoration complete.`);
+
+                // === END: Exact Viewport and State Restoration ===
+
                 console.log(`📹 [Stream ${streamId}] Page loaded, starting PATCHED RTMP streaming...`);
             } catch (navError) {
                 console.error(`❌ [Stream ${streamId}] Navigation error:`, navError);
@@ -586,22 +512,21 @@ io.on('connection', (socket) => {
                                                     return; // Don't send duration update if stopping
                                                 }
                                             }
-                                            
-                                            // Send to /lives page
-                                            io.emit('durationUpdate', {
-                                                streamId: streamId,
-                                                duration: duration
-                                            });
                                         }
+                                        
+                                        // Send to /lives page
+                                        io.emit('durationUpdate', {
+                                            streamId: streamId,
+                                            duration: duration
+                                        });
                                     }
                                 }
                             });
-                            
                             console.log(`✅ [Stream ${streamId}] FFMPEG duration monitoring attached`);
                         }
                     }
                 } catch (error) {
-                    // Ignore monitoring errors
+                    console.log(`❌ [Stream ${streamId}] FFMPEG monitor error:`, error.message);
                 }
             }, 2000);
             
@@ -625,8 +550,8 @@ io.on('connection', (socket) => {
                         timestamp: new Date().toLocaleTimeString(),
                         viewport: {
                             basic: {
-                                scrollX: exactPosition.scrollX,
-                                scrollY: exactPosition.scrollY
+                                scrollX: exactHardcoded.scrollX,
+                                scrollY: exactHardcoded.scrollY
                             }
                         }
                     };
@@ -1101,7 +1026,7 @@ app.post('/api/files/:filename', (req, res) => {
 const PORT = 3005;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 PATCHED RTMP Streaming Server running on http://0.0.0.0:${PORT}`);
-    console.log(`🌐 This server will be exposed publicly via Cloudflare Tunnel at: https://${process.env.BACKEND_DOMAIN}`);
+    console.log(`🌐 This server will be exposed publicly via Cloudflare Tunnel at: https://${process.env.PRIMARY_DOMAIN}`);
     console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
     console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
     console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);
