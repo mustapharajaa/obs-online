@@ -1248,7 +1248,7 @@
         // Initial status
         showStatus('🔧 Ready for RTMP streaming!', 'info');
 
-        // Banner functions
+        // Banner functions - moved to global scope
         async function notifyMe() {
             const email = document.getElementById('notifyEmail').value;
             if (!email || !email.includes('@')) {
