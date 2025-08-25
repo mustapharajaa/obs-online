@@ -644,7 +644,7 @@
                 <h3><span class="section-icon">🌐</span>Website URL</h3>
                 <div class="form-group">
                     <label for="websiteUrl">Target Website</label>
-                    <input type="url" id="websiteUrl" placeholder="https://example.com" value="https://aiscore.com/">
+                    <input type="url" id="websiteUrl" placeholder="https://example.com" value="https://neal.fun">
                 </div>
             </div>
 
@@ -881,8 +881,19 @@
     <!-- Contact Section -->
     <div class="contact-section">
         <h2>Contact</h2>
-        <p>Email <a href="mailto:contact@liveenity.com">contact@liveenity.com</a>, Facebook <a href="#">page</a><br>
-        or <a href="#">load Disqus comments</a> right here (click to activate).</p>
+        <p>Email <a href="mailto:contact@liveenity.com">contact@liveenity.com</a>, Facebook <a href="#">group</a></p>
+        
+        or <a href="#" id="load-comments-btn" onclick="loadComments(); return false;" style="color: #3498db; text-decoration: underline; cursor: pointer;">load comments</a> right here (click to activate).
+        
+        <div id="cusdis_thread"
+            style="display: none; margin-top: 20px; max-width: 1200px; margin-left: auto; margin-right: auto;"
+            data-host="https://cusdis.com"
+            data-app-id="ecc7b4b7-8fa9-4910-b075-949187a1344d"
+            data-page-id=""
+            data-page-url=""
+            data-page-title=""
+            data-theme="dark"
+        ></div>
     </div>
 
     <script>
@@ -1238,15 +1249,39 @@
         showStatus('🔧 Ready for RTMP streaming!', 'info');
 
         // Banner functions
-        function notifyMe() {
+        async function notifyMe() {
             const email = document.getElementById('notifyEmail').value;
-            if (email && email.includes('@')) {
-                // Store in localStorage for now
-                localStorage.setItem('notificationEmail', email);
-                showNotification('✅ Thank you! We\'ll notify you when ready.', 'success');
-                document.getElementById('notifyEmail').value = '';
-            } else {
+            if (!email || !email.includes('@')) {
                 showNotification('❌ Please enter a valid email address.', 'error');
+                return;
+            }
+
+            try {
+                // Send to Vercel API endpoint
+                const response = await fetch('/api/notify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Also store locally as backup
+                    localStorage.setItem('notificationEmail', email);
+                    showNotification('✅ Thank you! We\'ll notify you when ready.', 'success');
+                    document.getElementById('notifyEmail').value = '';
+                } else {
+                    throw new Error(result.error || 'Failed to register notification');
+                }
+            } catch (error) {
+                console.error('Notification error:', error);
+                // Fallback to localStorage if API fails
+                localStorage.setItem('notificationEmail', email);
+                showNotification('✅ Email saved locally. We\'ll notify you when ready.', 'success');
+                document.getElementById('notifyEmail').value = '';
             }
         }
 
@@ -1406,5 +1441,138 @@
             </div>
         </div>
     </div>
+    <link rel="stylesheet" href="/css/cusdis-custom.css">
+    
+    <script>
+        // Auto-resize iframe functionality
+        window.addEventListener('message', function(event) {
+            if (event.origin !== 'https://cusdis.com') return;
+            
+            // Handle different Cusdis message formats
+            if (event.data && (event.data.type === 'cusdis' || event.data.from === 'cusdis')) {
+                const iframe = document.querySelector('#cusdis_thread iframe');
+                if (iframe) {
+                    let height = event.data.height || event.data.data?.height;
+                    if (height) {
+                        iframe.style.height = height + 'px';
+                        iframe.style.minHeight = height + 'px';
+                    }
+                }
+            }
+            
+            // Also handle generic iframe resize messages
+            if (event.data && typeof event.data === 'object' && event.data.height) {
+                const iframe = document.querySelector('#cusdis_thread iframe');
+                if (iframe && event.source === iframe.contentWindow) {
+                    iframe.style.height = event.data.height + 'px';
+                    iframe.style.minHeight = event.data.height + 'px';
+                }
+            }
+        });
+        
+        function loadComments() {
+            const cusdisThread = document.getElementById('cusdis_thread');
+            const loadBtn = document.getElementById('load-comments-btn');
+            
+            if (cusdisThread) {
+                // Show comments and hide button
+                cusdisThread.style.display = 'block';
+                loadBtn.style.display = 'none';
+                
+                // Set dynamic attributes
+                cusdisThread.setAttribute('data-page-id', window.location.pathname);
+                cusdisThread.setAttribute('data-page-url', window.location.href);
+                cusdisThread.setAttribute('data-page-title', document.title);
+                
+                // Load Cusdis script
+                if (!window.cusdisLoaded) {
+                    const script = document.createElement('script');
+                    script.async = true;
+                    script.defer = true;
+                    script.src = 'https://cusdis.com/js/cusdis.es.js';
+                    document.head.appendChild(script);
+                    window.cusdisLoaded = true;
+                    
+                    // Set up iframe auto-resize after script loads
+                    script.onload = function() {
+                        setTimeout(function() {
+                            const iframe = document.querySelector('#cusdis_thread iframe');
+                            if (iframe) {
+                                iframe.style.width = '100%';
+                                iframe.style.border = 'none';
+                                iframe.style.background = 'transparent';
+                                iframe.style.minHeight = '600px'; // Set initial minimum height
+                                
+                                // Force iframe to expand
+                                const observer = new MutationObserver(function() {
+                                    if (iframe.contentDocument) {
+                                        const body = iframe.contentDocument.body;
+                                        if (body) {
+                                            const height = Math.max(body.scrollHeight, body.offsetHeight, 600);
+                                            iframe.style.height = height + 'px';
+                                        }
+                                    }
+                                });
+                                
+                                iframe.onload = function() {
+                                    if (iframe.contentDocument) {
+                                        observer.observe(iframe.contentDocument.body, {
+                                            childList: true,
+                                            subtree: true,
+                                            attributes: true
+                                        });
+                                        
+                                        // Initial height adjustment
+                                        const body = iframe.contentDocument.body;
+                                        if (body) {
+                                            const height = Math.max(body.scrollHeight, body.offsetHeight, 600);
+                                            iframe.style.height = height + 'px';
+                                        }
+                                        
+                                        // Inject custom styles to make input fields smaller
+                                        try {
+                                            const style = iframe.contentDocument.createElement('style');
+                                            style.textContent = `
+                                                input.w-full.p-2.border.border-gray-200.bg-transparent,
+                                                input[name="nickname"],
+                                                input[name="email"],
+                                                input[type="text"],
+                                                input[type="email"] {
+                                                    height: 28px !important;
+                                                    min-height: 28px !important;
+                                                    padding: 4px 8px !important;
+                                                    font-size: 13px !important;
+                                                    line-height: 1.2 !important;
+                                                    box-sizing: border-box !important;
+                                                }
+                                                .grid.grid-cols-2 input,
+                                                .grid input {
+                                                    height: 28px !important;
+                                                    min-height: 28px !important;
+                                                    padding: 4px 8px !important;
+                                                    font-size: 13px !important;
+                                                }
+                                                label.mb-2.block {
+                                                    font-size: 12px !important;
+                                                    margin-bottom: 3px !important;
+                                                }
+                                                .px-1 {
+                                                    padding-left: 4px !important;
+                                                    padding-right: 4px !important;
+                                                }
+                                            `;
+                                            iframe.contentDocument.head.appendChild(style);
+                                        } catch (e) {
+                                            console.log('Could not inject styles due to cross-origin restrictions');
+                                        }
+                                    }
+                                };
+                            }
+                        }, 1500);
+                    };
+                }
+            }
+        }
+    </script>
 </body>
 </html>

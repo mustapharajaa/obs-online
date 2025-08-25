@@ -1,0 +1,67 @@
+/* Cusdis Custom Styling to Match App Theme */
+.cusdis-container {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 40px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.cusdis-container h3 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.load-comments-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.load-comments-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+}
+
+/* Ensure iframe takes full width and auto-adjusts height */
+#cusdis_thread iframe {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* Override default Cusdis styles */
+#cusdis_thread {
+    background: transparent !important;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Make input fields smaller and more compact */
+#cusdis_thread iframe {
+    --cusdis-input-height: 32px !important;
+    --cusdis-input-padding: 6px 10px !important;
+    --cusdis-input-font-size: 14px !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .cusdis-container {
+        padding: 20px 15px;
+        margin: 15px 0;
+    }
+    
+    .load-comments-btn {
+        width: 100%;
+        padding: 15px;
+    }
+}
