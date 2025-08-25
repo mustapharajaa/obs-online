@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeSocket(backendUrl);
         // Dispatch a custom event to notify that the socket is ready
         document.dispatchEvent(new Event('socketInitialized'));
+
+        // Initialize video modal controls after everything is loaded
+        initializeVideoControls();
     };
     
     script.onerror = () => {
@@ -60,3 +63,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.head.appendChild(script);
 });
+
+function initializeVideoControls() {
+    const videoContainer = document.getElementById('videoContainer');
+    const videoModal = document.getElementById('videoModal');
+
+    // Function to show the modal
+    window.showVideoModal = function() {
+        if (videoModal) videoModal.style.display = 'flex';
+    }
+
+    // Function to hide the modal
+    window.hideVideoModal = function() {
+        if (videoModal) videoModal.style.display = 'none';
+    }
+
+    // Function to hide the preview forever
+    window.hideVideoForever = function(event) {
+        event.stopPropagation(); // Prevent bubbling to the container
+        if (videoContainer) videoContainer.style.display = 'none';
+        localStorage.setItem('hideVideoPreview', 'true');
+    }
+
+    // Check local storage on load
+    if (localStorage.getItem('hideVideoPreview') === 'true') {
+        if (videoContainer) videoContainer.style.display = 'none';
+    }
+
+    // Attach event listeners directly
+    if (videoContainer) {
+        videoContainer.onclick = window.showVideoModal;
+        const closeButton = videoContainer.querySelector('button');
+        if (closeButton) {
+            closeButton.onclick = window.hideVideoForever;
+        }
+    }
+    
+    if (videoModal) {
+        const closeButton = videoModal.querySelector('button');
+        if (closeButton) {
+            closeButton.onclick = window.hideVideoModal;
+        }
+    }
+}
