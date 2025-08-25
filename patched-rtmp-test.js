@@ -5,7 +5,9 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors'); // Import the cors package
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
 const path = require('path');
 const fs = require('fs');
 
