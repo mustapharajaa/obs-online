@@ -349,7 +349,7 @@
     </div>
 
     <script>
-        const socket = io();
+        const socket = io({ path: '/socket.io' });
         let streams = [];
         let currentEditingStreamId = null;
 
