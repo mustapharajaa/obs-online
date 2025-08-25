@@ -897,6 +897,70 @@
     </div>
 
     <script>
+        // Global notification function
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                z-index: 10000;
+                font-weight: bold;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // Global functions - accessible from anywhere
+        async function notifyMe() {
+            const email = document.getElementById('notifyEmail').value;
+            if (!email || !email.includes('@')) {
+                showNotification('❌ Please enter a valid email address.', 'error');
+                return;
+            }
+
+            try {
+                // Send to Vercel API endpoint
+                const response = await fetch('/api/notify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Also store locally as backup
+                    localStorage.setItem('notificationEmail', email);
+                    showNotification('✅ Thank you! We\'ll notify you when ready.', 'success');
+                    document.getElementById('notifyEmail').value = '';
+                } else {
+                    throw new Error(result.error || 'Failed to register notification');
+                }
+            } catch (error) {
+                console.error('Notification error:', error);
+                // Fallback to localStorage if API fails
+                localStorage.setItem('notificationEmail', email);
+                showNotification('✅ Email saved locally. We\'ll notify you when ready.', 'success');
+                document.getElementById('notifyEmail').value = '';
+            }
+        }
+
         document.addEventListener('socketInitialized', () => {
             const socket = window.socket; // Use the globally initialized socket
             let currentEditingFile = ''; // Variable to track which file is being edited
@@ -1248,42 +1312,6 @@
         // Initial status
         showStatus('🔧 Ready for RTMP streaming!', 'info');
 
-        // Banner functions - moved to global scope
-        async function notifyMe() {
-            const email = document.getElementById('notifyEmail').value;
-            if (!email || !email.includes('@')) {
-                showNotification('❌ Please enter a valid email address.', 'error');
-                return;
-            }
-
-            try {
-                // Send to Vercel API endpoint
-                const response = await fetch('/api/notify', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    // Also store locally as backup
-                    localStorage.setItem('notificationEmail', email);
-                    showNotification('✅ Thank you! We\'ll notify you when ready.', 'success');
-                    document.getElementById('notifyEmail').value = '';
-                } else {
-                    throw new Error(result.error || 'Failed to register notification');
-                }
-            } catch (error) {
-                console.error('Notification error:', error);
-                // Fallback to localStorage if API fails
-                localStorage.setItem('notificationEmail', email);
-                showNotification('✅ Email saved locally. We\'ll notify you when ready.', 'success');
-                document.getElementById('notifyEmail').value = '';
-            }
-        }
 
         function scrollToTech() {
             document.getElementById('tech-section').scrollIntoView({ 
