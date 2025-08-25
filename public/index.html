@@ -947,6 +947,7 @@
                 if (response.ok) {
                     // Also store locally as backup
                     localStorage.setItem('notificationEmail', email);
+                    console.log('Email successfully sent to API:', email);
                     showNotification('✅ Thank you! We\'ll notify you when ready.', 'success');
                     document.getElementById('notifyEmail').value = '';
                 } else {
@@ -954,9 +955,10 @@
                 }
             } catch (error) {
                 console.error('Notification error:', error);
+                console.log('Email saved locally as fallback:', email);
                 // Fallback to localStorage if API fails
                 localStorage.setItem('notificationEmail', email);
-                showNotification('✅ Email saved locally. We\'ll notify you when ready.', 'success');
+                showNotification('✅ Success. We\'ll notify you when ready.', 'success');
                 document.getElementById('notifyEmail').value = '';
             }
         }

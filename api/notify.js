@@ -1,6 +1,6 @@
 // Simple Vercel Serverless Function for email notifications
 // Uses Edge Config for ultra-low latency or falls back to logging
-export default async function handler(req, res) {
+export default function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     // Also log in a structured way for easy parsing
     console.log(`NEW_EMAIL: ${email} at ${timestamp}`);
 
-    return res.status(200).json({ 
+    res.status(200).json({ 
       success: true, 
       message: 'Email notification registered successfully',
       email: email,
@@ -55,6 +55,6 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Notification error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
