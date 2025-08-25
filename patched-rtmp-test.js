@@ -151,10 +151,6 @@ const io = new Server(server, {
 // Use the cors middleware for all Express routes
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
-// Serve static files from the 'public' directory for local development and API access
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-
 // Middleware to block direct browser access to the root URL
 app.use((req, res, next) => {
     // Allow requests to API endpoints and from localhost to pass through
@@ -164,11 +160,18 @@ app.use((req, res, next) => {
 
     // Block other requests to the root
     if (req.path === '/') {
-        return res.status(403).send('Access Denied');
+        // Also check if the request is for a file that might be served statically, like index.html
+        if (req.path === '/' || req.path.toLowerCase() === '/index.html') {
+             return res.status(403).send('Access Denied');
+        }
     }
 
     next();
 });
+
+// Serve static files from the 'public' directory for local development and API access
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
