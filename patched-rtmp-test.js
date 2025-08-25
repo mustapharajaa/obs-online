@@ -149,9 +149,8 @@ const io = new Server(server, {
 // Use the cors middleware for all Express routes
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
-app.use(express.static('.'));
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
-app.use(express.static(path.join(__dirname, 'public')));
+// Static file serving has been removed to make this an API-only endpoint.
+// The frontend is served by Vercel from the 'public' directory.
 app.use(express.json());
 
 // Health check endpoint
