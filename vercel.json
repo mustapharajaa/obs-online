@@ -3,10 +3,5 @@
   "outputDirectory": "public",
   "installCommand": "echo 'No dependencies to install'",
   "cleanUrls": true,
-  "trailingSlash": false,
-  "functions": {
-    "api/notify.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  "trailingSlash": false
 }
