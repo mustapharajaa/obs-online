@@ -2,7 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeBackend = localStorage.getItem('selectedBackend') || 'local';
     const backendConfigs = JSON.parse(localStorage.getItem('backendConfigs') || '{}');
 
-    let backendUrl = window.location.origin; // Default for local/Vercel deployment
+    let backendUrl;
+
+    // Set the default backend URL based on the environment
+    if (window.location.hostname === 'obs.liveenity.com') {
+        backendUrl = 'https://api.liveenity.com';
+    } else {
+        backendUrl = window.location.origin; // Default for local development
+    }
 
     if (backendConfigs[activeBackend] && backendConfigs[activeBackend].url) {
         backendUrl = backendConfigs[activeBackend].url;

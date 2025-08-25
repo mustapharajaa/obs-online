@@ -1,11 +1,36 @@
 # Cloudflare Tunnel Setup Script
 # This script automates the setup of a Cloudflare Tunnel to securely expose your local server.
 
-# --- Configuration ---
-$TunnelName = "my-rtmp-tunnel"
-$Hostname = "obs.liveenity.com"
-$LocalServiceUrl = "http://localhost:3005"
-# ---------------------
+# --- Configuration from .env ---
+# Read and parse the .env file
+$envFile = ".\.env"
+if (-not (Test-Path $envFile)) {
+    Write-Host "Error: .env file not found in the current directory." -ForegroundColor Red
+    exit
+}
+
+$envConfig = @{}
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match "^\s*([^#\s=]+)\s*=\s*(.*)") {
+        $key = $Matches[1]
+        $value = $Matches[2].Trim()
+        $envConfig[$key] = $value
+    }
+}
+
+# Set variables from the parsed .env config
+$Hostname = $envConfig["BACKEND_DOMAIN"]
+$Port = $envConfig["SERVER_PORT"]
+$TunnelName = $Hostname.Split('.')[0] # e.g., "obs" from "obs.liveenity.com"
+$LocalServiceUrl = "http://localhost:$Port"
+
+if (-not $Hostname -or -not $Port) {
+    Write-Host "Error: BACKEND_DOMAIN or SERVER_PORT not found in .env file." -ForegroundColor Red
+    exit
+}
+
+Write-Host "Loaded configuration: Hostname=$Hostname, Service=$LocalServiceUrl, TunnelName=$TunnelName" -ForegroundColor Green
+# -----------------------------
 
 # --- Script Body ---
 Write-Host "--- Cloudflare Tunnel Setup ---" -ForegroundColor Yellow

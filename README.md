@@ -6,7 +6,7 @@ A powerful Node.js application for real-time browser screen recording and RTMP s
 ```bash
 # 1. Download and install Node.js from https://nodejs.org/
 # 2. Clone the repository
-git clone https://github.com/mustapharajaa/recORDscreen.git
+git clone https://github.com/mustapharajaa/obs-online.git
 cd recORDscreen
 
 # 3. Install dependencies (automatically installs Chrome)
@@ -18,12 +18,23 @@ npm run setup
 # 5. Start server
 npm start
 ```
+# cloaudflare ssl tunnel 
+
+
+
 http://ip:3005/lives
 http://ip:3005
 
 # Add Firewall Group
 AWS/Azure/Google Cloud Security Groups: Firewall Group
 Add inbound rule: TCP port 3005 from 0.0.0.0/0
+
+
+
+
+
+
+
 
 
 # Add firewall rule for port 3005
