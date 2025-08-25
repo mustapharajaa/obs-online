@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RTMP Streaming Control Panel</title>
     <script src="js/backend-manager.js"></script>
+    <script src="js/file-editor.js"></script>
     <style>
         * {
             margin: 0;
@@ -1297,6 +1298,84 @@
         // Run on page load
         checkVideoVisibility();
         });
+    </script>
+    <script>
+        let currentEditingFile = null;
+
+        function openFileEditor(fileName, title) {
+            currentEditingFile = fileName;
+            document.getElementById('fileEditorTitle').innerText = title;
+
+            if (!window.socket) {
+                alert('Backend connection not ready. Please wait a moment and try again.');
+                return;
+            }
+
+            window.socket.emit('get_file_content', { filename: fileName }, (response) => {
+                if (response.error) {
+                    console.error(`Error getting file content: ${response.error}`);
+                    document.getElementById('fileEditorContent').value = `// Error: ${response.error}`;
+                } else {
+                    document.getElementById('fileEditorContent').value = response.content;
+                }
+                document.getElementById('fileEditorModal').style.display = 'flex';
+            });
+        }
+
+        function editCookiesFile() {
+            openFileEditor('cookies.json', '🍪 Manage Cookies');
+        }
+
+        function editBrowserStateFile() {
+            openFileEditor('browser-state.json', '🌐 Manage Browser Position');
+        }
+
+        function closeFileEditor() {
+            document.getElementById('fileEditorModal').style.display = 'none';
+            currentEditingFile = null;
+            document.getElementById('validationMessage').style.display = 'none';
+        }
+
+        function validateAndSave() {
+            const content = document.getElementById('fileEditorContent').value;
+            const validationMessage = document.getElementById('validationMessage');
+
+            try {
+                JSON.parse(content);
+                validationMessage.style.display = 'none';
+
+                if (!window.socket) {
+                    alert('Backend connection not ready. Please wait a moment and try again.');
+                    return;
+                }
+
+                window.socket.emit('save_file_content', { filename: currentEditingFile, content: content }, (response) => {
+                    if (response.error) {
+                        validationMessage.textContent = `Error saving: ${response.error}`;
+                        validationMessage.style.background = '#f8d7da';
+                        validationMessage.style.color = '#721c24';
+                    } else {
+                        validationMessage.textContent = '✅ File saved successfully!';
+                        validationMessage.style.background = '#d4edda';
+                        validationMessage.style.color = '#155724';
+                        setTimeout(closeFileEditor, 1500);
+                    }
+                    validationMessage.style.display = 'block';
+                });
+
+            } catch (e) {
+                validationMessage.textContent = '❌ Invalid JSON format. Please correct it.';
+                validationMessage.style.background = '#f8d7da';
+                validationMessage.style.color = '#721c24';
+                validationMessage.style.display = 'block';
+            }
+        }
+
+        function closeFileEditorOnOutsideClick(event) {
+            if (event.target.id === 'fileEditorModal') {
+                closeFileEditor();
+            }
+        }
     </script>
 </body>
 </html>

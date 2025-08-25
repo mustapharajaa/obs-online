@@ -171,6 +171,58 @@ let streamCounter = 0;
 io.on('connection', (socket) => {
     console.log('🔌 Client connected');
 
+    // Handle file editing requests from the frontend
+    socket.on('get_file_content', ({ filename }, callback) => {
+        console.log(`📂 Request to get content of: ${filename}`);
+        // Security: Only allow editing of specific, safe-to-edit files
+        if (filename !== 'cookies.json' && filename !== 'browser-state.json') {
+            console.error(`❌ Access denied for file: ${filename}`);
+            return callback({ error: 'Access Denied. You can only edit cookies.json or browser-state.json.' });
+        }
+
+        const filePath = path.join(__dirname, filename);
+        fs.readFile(filePath, 'utf8', (err, content) => {
+            if (err) {
+                console.error(`❌ Error reading file ${filename}:`, err);
+                 if (err.code === 'ENOENT') {
+                    console.log(`⚠️ File not found: ${filename}. Returning default empty content.`);
+                    // Return a default empty state based on the file type
+                    const defaultContent = filename === 'cookies.json' ? '[]' : '{}';
+                    return callback({ content: defaultContent });
+                }
+                return callback({ error: `File not found or could not be read.` });
+            }
+            callback({ content });
+        });
+    });
+
+    socket.on('save_file_content', ({ filename, content }, callback) => {
+        console.log(`💾 Request to save content to: ${filename}`);
+        // Security: Only allow editing of specific, safe-to-edit files
+        if (filename !== 'cookies.json' && filename !== 'browser-state.json') {
+            console.error(`❌ Access denied for file: ${filename}`);
+            return callback({ error: 'Access Denied. You can only edit cookies.json or browser-state.json.' });
+        }
+
+        try {
+            // Validate JSON content before saving to prevent corruption
+            JSON.parse(content);
+        } catch (e) {
+            console.error(`❌ Invalid JSON content for ${filename}:`, e.message);
+            return callback({ error: 'Invalid JSON format. Please correct and try again.' });
+        }
+
+        const filePath = path.join(__dirname, filename);
+        fs.writeFile(filePath, content, 'utf8', (err) => {
+            if (err) {
+                console.error(`❌ Error writing to file ${filename}:`, err);
+                return callback({ error: 'Failed to save file.' });
+            }
+            console.log(`✅ Successfully saved ${filename}`);
+            callback({ success: true });
+        });
+    });
+
     socket.on('startPatchedRTMPStream', async (data) => {
         const { url, rtmpUrl, streamKey, bitrate = 2500, fps = 15, resolution = '1280x720', scrollX = 0, scrollY = 0, zoomLevel = 100, viewportWidth = 1280, viewportHeight = 720, maxDuration = null } = data;
         
