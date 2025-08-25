@@ -1,7 +1,10 @@
 {
-  "buildCommand": "echo 'Static files only - no build needed'",
-  "outputDirectory": "public",
-  "installCommand": "echo 'No dependencies to install'",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
+    }
+  ]
 }

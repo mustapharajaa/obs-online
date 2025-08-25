@@ -1,5 +1,3 @@
-// Simple Vercel Serverless Function for email notifications
-// Uses Edge Config for ultra-low latency or falls back to logging
 export default function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
