@@ -130,7 +130,7 @@ function ensureRequiredFiles() {
 ensureRequiredFiles();
 
 // Verify .env variables are loaded
-console.log('✅ PRIMARY_DOMAIN:', process.env.PRIMARY_DOMAIN);
+console.log('✅ PRIMARY_DOMAIN:', process.env.BACKEND_DOMAIN);
 
 // This URL will be the public Cloudflare Tunnel address, which doesn't need a port.
 const app = express();
@@ -151,8 +151,8 @@ const io = new Server(server, {
 // Use the cors middleware for all Express routes
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
-// Static file serving has been removed to make this an API-only endpoint.
-// The frontend is served by Vercel from the 'public' directory.
+// Serve static files from the 'public' directory for local development and API access
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // Health check endpoint
@@ -319,7 +319,7 @@ io.on('connection', (socket) => {
             console.log(`🔍 [Stream ${streamId}] DEBUG: About to call page.goto...`);
             try {
                 console.log(`🔍 [Stream ${streamId}] DEBUG: Calling page.goto with 5min timeout...`);
-                await page.goto(url, { waitUntil: 'networkidle0', timeout: 300000 });
+                await page.goto(url, { waitUntil: 'networkidle2', timeout: 300000 });
                 console.log(`✅ [Stream ${streamId}] Navigated to: ${url}`);
                 console.log(`🔍 [Stream ${streamId}] DEBUG: Navigation successful, proceeding to page setup...`);
 
@@ -1101,7 +1101,7 @@ app.post('/api/files/:filename', (req, res) => {
 const PORT = 3005;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 PATCHED RTMP Streaming Server running on http://0.0.0.0:${PORT}`);
-    console.log(`🌐 This server will be exposed publicly via Cloudflare Tunnel at: https://${process.env.PRIMARY_DOMAIN}`);
+    console.log(`🌐 This server will be exposed publicly via Cloudflare Tunnel at: https://${process.env.BACKEND_DOMAIN}`);
     console.log(`🎯 Pipeline: Chrome DevTools → PATCHED puppeteer-screen-recorder → RTMP`);
     console.log(`✨ NO MP4 FILES • DIRECT RTMP • PATCHED LIBRARY • REAL-TIME`);
     console.log(`🔧 Library modification: pageVideoStreamWriter.ts now supports RTMP URLs`);

@@ -19,7 +19,16 @@ npm run setup
 npm start
 ```
 # cloaudflare ssl tunnel 
+run powersheel as adminisatrator
 
+1 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+2 .\setup_cloudflare_tunnel.ps1
+  add caname and  showing  Tunnel ID:  in your domain dns
+  
+in separate terminal keep this running 
+
+1 cloudflared tunnel run api
+       or cloudflared tunnel run my-rtmp-tunnel
 
 
 http://ip:3005/lives
