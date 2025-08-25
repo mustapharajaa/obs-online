@@ -20,7 +20,7 @@ npm start
 ```
 # cloaudflare ssl tunnel 
 run powersheel as adminisatrator
-
+      cd .../obs-online
 1 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 2 .\setup_cloudflare_tunnel.ps1
   add caname and  showing  Tunnel ID:  in your domain dns
@@ -37,12 +37,6 @@ http://ip:3005
 # Add Firewall Group
 AWS/Azure/Google Cloud Security Groups: Firewall Group
 Add inbound rule: TCP port 3005 from 0.0.0.0/0
-
-
-
-
-
-
 
 
 

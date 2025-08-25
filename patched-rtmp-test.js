@@ -155,6 +155,21 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// Middleware to block direct browser access to the root URL
+app.use((req, res, next) => {
+    // Allow requests to API endpoints and from localhost to pass through
+    if (req.path.startsWith('/api/') || req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
+        return next();
+    }
+
+    // Block other requests to the root
+    if (req.path === '/') {
+        return res.status(403).send('Access Denied');
+    }
+
+    next();
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 

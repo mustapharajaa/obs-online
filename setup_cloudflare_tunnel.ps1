@@ -102,43 +102,32 @@ try {
 
 # Step 3: Create Tunnel
 Write-Host "Step 3: Creating tunnel '$TunnelName'..."
-$tunnelList = cloudflared tunnel list
-$existingTunnel = $tunnelList | Select-String -Pattern "^$TunnelName\s+([a-f0-9-]+)"
 
-if ($existingTunnel) {
-    $tunnelId = $existingTunnel.Matches[0].Groups[1].Value
-    $credentialFile = "$env:USERPROFILE\.cloudflared\$tunnelId.json"
-    
-    Write-Host "Tunnel '$TunnelName' already exists with ID: $tunnelId"
+# To ensure a clean state, first attempt to delete the tunnel if it already exists.
+# This handles cases where the tunnel exists remotely but local credentials are lost.
+Write-Host "Ensuring a clean slate by attempting to delete '$TunnelName' first..."
+cloudflared tunnel delete $TunnelName > $null
 
-    if (Test-Path $credentialFile) {
-        Write-Host "✅ Credentials file found at $credentialFile"
-    } else {
-        Write-Host "⚠️ Credentials file not found. The tunnel may be misconfigured."
-        Write-Host "You may need to delete the tunnel from the Cloudflare dashboard and re-run this script."
-        Write-Host "Attempting to proceed, but routing may fail."
-    }
-} else {
-    Write-Host "Tunnel '$TunnelName' not found. Creating a new one..."
-    $creationOutput = cloudflared tunnel create $TunnelName
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Failed to create tunnel. Please check your Cloudflare configuration."
-        Write-Host $creationOutput
-        exit 1
-    }
-    Write-Host "✅ Tunnel '$TunnelName' created successfully."
-    # Extract Tunnel ID from creation output
-    $tunnelId = ($creationOutput | Select-String -Pattern '([a-f0-9-]+)$').Matches[0].Groups[1].Value
-    Write-Host "Tunnel ID: $tunnelId"
+# Now, create a new tunnel.
+Write-Host "Creating a new tunnel named '$TunnelName'..."
+$creationOutput = cloudflared tunnel create $TunnelName
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Failed to create tunnel. Please check your Cloudflare configuration and permissions."
+    Write-Host $creationOutput
+    exit 1
 }
 
-# Extract Tunnel ID and credentials file path from the output of 'cloudflared tunnel list'
-$tunnelInfo = cloudflared tunnel list | Where-Object { $_ -match $TunnelName }
-$tunnelId = ($tunnelInfo -split ' ')[0]
+Write-Host "✅ Tunnel '$TunnelName' created successfully."
+# Extract Tunnel ID from creation output
+$tunnelId = ($creationOutput | Select-String -Pattern '([a-f0-9-]{36})').Matches[0].Groups[1].Value
 if (-not $tunnelId) {
-    Write-Host "Error: Could not retrieve Tunnel ID. Please check 'cloudflared tunnel list' manually." -ForegroundColor Red
-    exit
+    Write-Host "❌ Could not extract Tunnel ID from creation output."
+    exit 1
 }
+Write-Host "Discovered Tunnel ID: $tunnelId"
+
+# The Tunnel ID is now reliably extracted from the 'create' command output.
+# The credentials file is located using this ID.
 $credsFilePath = "$env:USERPROFILE\.cloudflared\$tunnelId.json"
 
 Write-Host "Tunnel ID: $tunnelId"
