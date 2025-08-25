@@ -175,7 +175,7 @@ io.on('connection', (socket) => {
     socket.on('get_file_content', ({ filename }, callback) => {
         console.log(`📂 Request to get content of: ${filename}`);
         // Security: Only allow editing of specific, safe-to-edit files
-        if (filename !== 'cookies.json' && filename !== 'browser-state.json') {
+        if (filename !== 'cookies.json' && filename !== 'browser-state-data.txt') {
             console.error(`❌ Access denied for file: ${filename}`);
             return callback({ error: 'Access Denied. You can only edit cookies.json or browser-state.json.' });
         }
@@ -199,7 +199,7 @@ io.on('connection', (socket) => {
     socket.on('save_file_content', ({ filename, content }, callback) => {
         console.log(`💾 Request to save content to: ${filename}`);
         // Security: Only allow editing of specific, safe-to-edit files
-        if (filename !== 'cookies.json' && filename !== 'browser-state.json') {
+        if (filename !== 'cookies.json' && filename !== 'browser-state-data.txt') {
             console.error(`❌ Access denied for file: ${filename}`);
             return callback({ error: 'Access Denied. You can only edit cookies.json or browser-state.json.' });
         }
