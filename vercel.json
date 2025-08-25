@@ -1,7 +1,27 @@
 {
-  "buildCommand": "echo 'Static files only - no build needed'",
-  "outputDirectory": "public",
-  "installCommand": "echo 'No dependencies to install'",
-  "cleanUrls": true,
-  "trailingSlash": false
+  "version": 2,
+  "builds": [
+    {
+      "src": "patched-rtmp-test.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/socket.io/.*",
+      "dest": "patched-rtmp-test.js"
+    },
+    {
+      "src": "/api/.*",
+      "dest": "patched-rtmp-test.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
 }
