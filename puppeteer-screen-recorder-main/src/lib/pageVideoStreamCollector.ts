@@ -13,6 +13,7 @@ export class pageVideoStreamCollector extends EventEmitter {
   private sessionsStack: [CDPSession?] = [];
   private isStreamingEnded = false;
   private frameCount = 0;
+  private captureTimer?: NodeJS.Timeout;
 
   private isFrameAckReceived: Promise<void>;
 
@@ -67,7 +68,18 @@ export class pageVideoStreamCollector extends EventEmitter {
         everyNthFrame: 1,
         format: this.options.format || 'jpeg',
         quality: quality,
+        maxWidth: 1920,
+        maxHeight: 1080,
       });
+      
+      // Enable page domain for better frame capture control
+      await currentSession.send('Page.enable');
+      
+      // Force continuous frame capture by enabling runtime and setting up timer
+      await currentSession.send('Runtime.enable');
+      
+      // Set up continuous frame capture timer
+      this.setupContinuousCapture(currentSession);
       console.log('✅ PATCHED LIBRARY: Chrome screencast started successfully');
     } catch (e) {
       console.error('❌ PATCHED LIBRARY: Chrome screencast failed:', e.message);
@@ -77,11 +89,68 @@ export class pageVideoStreamCollector extends EventEmitter {
     }
   }
 
+  private setupContinuousCapture(session: CDPSession) {
+    // Clear any existing timer
+    if (this.captureTimer) {
+      clearInterval(this.captureTimer);
+    }
+    
+    // Set up continuous frame capture - force frames even on static pages
+    this.captureTimer = setInterval(async () => {
+      try {
+        // Force Chrome to capture a frame by making a very subtle visual change
+        await session.send('Runtime.evaluate', {
+          expression: `
+            (function() {
+              // Create a 1px invisible element that forces repaint
+              const tick = Date.now();
+              const elem = document.createElement('div');
+              elem.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:1px;opacity:0.001;z-index:-999999;pointer-events:none;';
+              elem.setAttribute('data-tick', tick.toString());
+              document.body.appendChild(elem);
+              
+              // Force layout calculation
+              elem.offsetHeight;
+              
+              // Remove immediately after forcing repaint
+              setTimeout(() => {
+                if (elem.parentNode) {
+                  elem.parentNode.removeChild(elem);
+                }
+              }, 1);
+              
+              // Also change a data attribute as backup
+              document.documentElement.setAttribute('data-frame-tick', tick.toString());
+            })();
+          `,
+          silent: true
+        });
+      } catch (e) {
+        // Fallback: try simpler approach
+        try {
+          await session.send('Runtime.evaluate', {
+            expression: `document.documentElement.setAttribute('data-tick', Date.now().toString());`,
+            silent: true
+          });
+        } catch (e2) {
+          // Ignore all errors - continue trying
+        }
+      }
+    }, 66); // ~15 FPS (1000ms / 15 = 66ms)
+  }
+
   private async stopScreenCast() {
     const currentSession = this.getCurrentSession();
     if (!currentSession) {
       return;
     }
+    
+    // Clear capture timer
+    if (this.captureTimer) {
+      clearInterval(this.captureTimer);
+      this.captureTimer = undefined;
+    }
+    
     await currentSession.send('Page.stopScreencast');
   }
 
@@ -138,6 +207,12 @@ export class pageVideoStreamCollector extends EventEmitter {
   }
 
   private async endSession(): Promise<void> {
+    // Clear capture timer when ending session
+    if (this.captureTimer) {
+      clearInterval(this.captureTimer);
+      this.captureTimer = undefined;
+    }
+    
     this.sessionsStack.pop();
     await this.startScreenCast();
   }
