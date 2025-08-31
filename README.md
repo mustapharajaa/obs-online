@@ -21,8 +21,10 @@ npm start
 # cloaudflare ssl tunnel 
 run powersheel as adminisatrator
       cd .../obs-online
-1 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-2 .\setup_cloudflare_tunnel.ps1
+1,
+ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+ .\setup_cloudflare_tunnel.ps1
+2,
   add caname and  showing  Tunnel ID:  in your domain dns
   
 in separate terminal keep this running 
@@ -52,6 +54,7 @@ netsh advfirewall firewall show rule name="Node.js RTMP Server"
 1 vercel fontend 
 2 rdp/vps bacend 
 https://ip:3005/backend-admin.html
+
 
 
 
